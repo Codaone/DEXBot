@@ -2,6 +2,7 @@ import traceback
 import importlib
 import time
 import logging
+import os.path
 from bitshares.notify import Notify
 from bitshares.instance import shared_bitshares_instance
 log = logging.getLogger(__name__)
