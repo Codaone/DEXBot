@@ -42,7 +42,8 @@ setup(
         "tqdm",
         "pyyaml",
         "sqlalchemy",
-        "appdirs"
+        "appdirs",
+        "pythonconfig"
     ],
     include_package_data=True,
 )
