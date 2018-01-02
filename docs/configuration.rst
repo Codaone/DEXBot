@@ -18,7 +18,8 @@ file and takes the following form:
         NAME_OF_BOT:
 
             # Python module to look for the strategy (can be custom)
-            module: "stakemachine.strategies.echo"
+	    # stakemachine will search in ~/bots as well as standard dirs 
+	    module: "stakemachine.strategies.echo"
 
             # The bot class in that module to use
             bot: Echo

@@ -45,6 +45,11 @@ class BotInfrastructure():
             bitshares_instance=self.bitshares
         )
 
+        # set the module search path
+        userbotpath = os.path.expanduser("~/bots")
+        if os.path.exists(userbotpath):
+            sys.path.append(userbotpath)
+        
         # Initialize bots:
         for botname, bot in config["bots"].items():
             klass = getattr(
