@@ -16,6 +16,7 @@ class BotInfrastructure():
         self,
         config,
         bitshares_instance=None,
+        interactive=True # if false suppress any user-interaction
     ):
         # BitShares instance
         self.bitshares = bitshares_instance or shared_bitshares_instance()

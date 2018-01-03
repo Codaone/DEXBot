@@ -2,7 +2,7 @@
 import yaml
 import logging
 import click
-import os.path
+import os.path, os
 
 from .ui import (
     verbose,
@@ -36,6 +36,11 @@ logging.basicConfig(
     type=int,
     default=3,
     help='Verbosity (0-15)')
+@click.option(
+    '--systemd/--no-systemd',
+    '-d',
+    default=False,
+    help='Run as a daemon from systemd')
 @click.pass_context
 def main(ctx, **kwargs):
     ctx.obj = {}
@@ -52,7 +57,14 @@ def main(ctx, **kwargs):
 def run(ctx):
     """ Continuously run the bot
     """
-    bot = BotInfrastructure(ctx.config)
+    bot = BotInfrastructure(ctx.config,interactive=not ctx.obj['systemd'])
+    if ctx.obj['systemd']:
+        try:
+            import sdnotify # a soft dependency on sdnotify -- don't crash on non-systemd systems
+            n = sdnotify.SystemdNotifier()
+            n.notify("READY=1")
+        except:
+            warning("sdnotify not available")
     bot.run()
 
 @main.command()
@@ -68,10 +80,23 @@ def configure(ctx):
         config = {}
     try:
         configure_stakemachine(config)
-        with open(ctx.obj["configfile"],"w") as fd:
+        click.clear()
+        cfg_file = ctx.obj["configfile"]
+        if not "/" in cfg_file: # use hoke directory by default.
+            cfg_file = os.path.expanduser("~/"+cfg_file)
+        with open(cfg_file,"w") as fd:
             yaml.dump(config,fd,default_flow_style=False)
-        print("new configuration saved")
+        click.echo("new configuration saved")
+        if config['systemd_status'] == 'installed':
+            # we are already installed
+            click.echo("restarting stakemachine daemon")
+            os.system("systemctl --user restart stakemachine")
+        if config['systemd_status'] == 'install':
+            os.system("systemctl --user enable stakemachine")
+            click.echo("starting stakemachine daemon")
+            os.system("systemctl --user start stakemachine")
     except QuitException:
-        print("configuration exited: nothing changed")
+        click.echo("configuration exited: nothing changed")
+        
 if __name__ == '__main__':
     main()

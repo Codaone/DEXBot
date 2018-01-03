@@ -4,7 +4,7 @@ Requires a working dialog tool: so UNIX-like sytems only
 """
 
 
-import dialog, importlib, os
+import dialog, importlib, os, os.path, sys
 
 
 NODES=[("wss://openledger.hk/ws", "OpenLedger"),
@@ -16,8 +16,52 @@ STRATEGIES={'Echo':('stakemachine.strategies.echo','Echo'),
             'Liquidity Walls':('stakemachine.strategies.walls','Walls'),
             'Storage Demo':('stakemachine.strategies.storagedemo','StorageDemo')}
 
+SYSTEMD_SERVICE_NAME=os.path.expanduser("~/.local/share/systemd/user/stakemachine.service")
+
+SYSTEMD_SERVICE_FILE="""
+[Unit]
+Description=Stakemachine
+
+[Service]
+Type=notify
+WorkingDirectory={homedir}
+ExecStart={exe} --systemd run 
+Environment=PYTHONUNBUFFERED=true
+Environment=UNLOCK={passwd}
+
+[Install]
+WantedBy=default.target
+"""
+
 class QuitException(Exception): pass
 
+
+def setup_systemd(d,config):
+    if config.get("systemd_status","install") == "reject":
+        return # don't nag user if previously said no
+    if not os.path.exists("/etc/systemd"):
+        return # no working systemd
+    if os.path.exists(SYSTEMD_SERVICE_NAME):
+        # stakemachine already installed
+        # so just tell caller to quietly reboot the daemon
+        config["systemd_status"] = "installed"
+        return
+    import pudb
+    pudb.set_trace()
+    if d.yesno("Do you want to install stakemachine as a background (daemon) process?") == d.OK:
+        for i in ["~/.local","~/.local/share","~/.local/share/systemd","~/.local/share/systemd/user"]:
+            j = os.path.expanduser(i)
+            if not os.path.exists(j):
+                os.mkdir(j)
+        code, passwd = d.passwordbox("The wallet password entered with uptick\nNOTE: this will be saved on disc so the bot can run unattended. This means anyone with access to this computer's file can spend all your money",insecure=True)
+        if code != d.OK: raise QuitException()
+        fd = os.open(SYSTEMD_SERVICE_NAME, os.O_WRONLY|os.O_CREAT, 0o700) # because we hold password be restrictive
+        with open(fd, "w") as fp:
+            fp.write(SYSTEMD_SERVICE_FILE.format(exe=sys.argv[0],passwd=passwd,homedir=os.path.expanduser("~")))
+        config['systemd_status'] = 'install'
+    else:
+        config['systemd_status'] = 'reject'
+    
 def select_choice(current,choices):
     return [(tag,text,current == tag) for tag,text in choices]
 
@@ -73,7 +117,7 @@ def configure_stakemachine(config):
             config['bots'][txt] = configure_bot(d,{})
         else:
             config['bots'][botname] = configure_bot(d,config['bots'][botname])
-    os.system("clear")
+    setup_systemd(d,config)
     return config
 
 if __name__=='__main__':

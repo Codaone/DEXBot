@@ -43,7 +43,8 @@ setup(
         "pyyaml",
         "sqlalchemy",
         "appdirs",
-        "pythonconfig"
+        "pythonconfig",
+        "sdnotify"
     ],
     include_package_data=True,
 )
