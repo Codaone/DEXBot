@@ -23,9 +23,21 @@ bot's account into the pybitshares wallet. This can be done using
 
 Configuration
 -------------
+
+``stakemachine`` can be configured using
+
+    stakemachine configure
+
+This will walk you through the configuration process. If `systemd`
+is available it wil offer to install a user service to automatically
+run stakemachine in the background.
+
+Manual Configuration
+--------------------
+
 You will need to create configuration file in YAML format. The default
 file name is ``config.yml``, otherwise you can specify a different
-config file using the ``--configufile X`` parameter of ``stakemachine``.
+config file using the ``--configfile X`` parameter of ``stakemachine``.
 
 Read more about the :doc:`configuration`.
 
