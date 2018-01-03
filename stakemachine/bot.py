@@ -17,6 +17,8 @@ class BotInfrastructure():
         config,
         bitshares_instance=None,
         interactive=True # if false suppress any user-interaction
+            # currently this is not used, but in future in case some of this code tries to interact
+            # with user: we can't when running as a daemon
     ):
         # BitShares instance
         self.bitshares = bitshares_instance or shared_bitshares_instance()
