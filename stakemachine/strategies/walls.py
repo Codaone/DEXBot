@@ -4,11 +4,24 @@ from collections import Counter
 from bitshares.amount import Amount
 from stakemachine.basestrategy import BaseStrategy
 from stakemachine.errors import InsufficientFundsError
+from stakemachine.configure import ConfigElement
+
 import logging
 log = logging.getLogger(__name__)
 
 
 class Walls(BaseStrategy):
+
+
+    configure = [
+        ConfigElement("spread","int",5,"the spread between sell and buy as percentage",(0,100)),
+        ConfigElement("threshold","int",5,"percentage the feed has to move bofre we change orders",(0,100)),
+        ConfigElement("buy","float",0.0,"the default amount to buy",(0.0,None)),
+        ConfigElement("sell","float",0.0,"the default amount to sell",(0.0,None)),
+        ConfigElement("blocks","int",20,"number of blocks to wait before re-calculating",(0,10000)),
+        ConfigElement("dry_run","bool",False,"Dry Run Mode\nIf Yes the bot won't buy or sell anything, just log what it would do.\nIf No, the bot will buy and sell for real.",None)
+        ]
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -25,7 +38,7 @@ class Walls(BaseStrategy):
         self.counter = Counter()
 
         # Tests for actions
-        self.test_blocks = self.bot.get("test", {}).get("blocks", 0)
+        self.test_blocks = self.bot.get("blocks", 0)
 
     def error(self, *args, **kwargs):
         self.disabled = True
@@ -40,38 +53,39 @@ class Walls(BaseStrategy):
         # Canceling orders
         self.cancelall()
 
-        # Target
-        target = self.bot.get("target", {})
         price = self.getprice()
 
         # prices
-        buy_price = price * (1 - target["offsets"]["buy"] / 100)
-        sell_price = price * (1 + target["offsets"]["sell"] / 100)
+        buy_price = price * (1 - self.bot['spread'] / 100)
+        sell_price = price * (1 + self.bot['spread'] / 100)
 
         # Store price in storage for later use
         self["feed_price"] = float(price)
 
         # Buy Side
-        if float(self.balance(self.market["base"])) < buy_price * target["amount"]["buy"]:
-            InsufficientFundsError(Amount(target["amount"]["buy"] * float(buy_price), self.market["base"]))
+        if float(self.balance(self.market["base"])) < buy_price * self.bot["buy"]:
+            raise InsufficientFundsError(Amount(self.bot["buy"] * float(buy_price), self.market["base"]))
             self["insufficient_buy"] = True
         else:
             self["insufficient_buy"] = False
-            self.market.buy(
-                buy_price,
-                Amount(target["amount"]["buy"], self.market["quote"]),
-                account=self.account
-            )
+            if self.bot.get("dry_run",False):
+                log.info("")
+            else:
+                self.market.buy(
+                    buy_price,
+                    Amount(self.bot["buy"], self.market["quote"]),
+                    account=self.account
+                )
 
         # Sell Side
-        if float(self.balance(self.market["quote"])) < target["amount"]["sell"]:
-            InsufficientFundsError(Amount(target["amount"]["sell"], self.market["quote"]))
+        if float(self.balance(self.market["quote"])) < self.bot["sell"]:
+            raise InsufficientFundsError(Amount(self.bot["sell"], self.market["quote"]))
             self["insufficient_sell"] = True
         else:
             self["insufficient_sell"] = False
             self.market.sell(
                 sell_price,
-                Amount(target["amount"]["sell"], self.market["quote"]),
+                Amount(self.bot["sell"], self.market["quote"]),
                 account=self.account
             )
 
@@ -81,8 +95,7 @@ class Walls(BaseStrategy):
         """ Here we obtain the price for the quote and make sure it has
             a feed price
         """
-        target = self.bot.get("target", {})
-        if target.get("reference") == "feed":
+        if self.bot.get("reference") == "feed":
             assert self.market == self.market.core_quote_market(), "Wrong market for 'feed' reference!"
             ticker = self.market.ticker()
             price = ticker.get("quoteSettlement_price")
@@ -116,7 +129,7 @@ class Walls(BaseStrategy):
         # Test if price feed has moved more than the threshold
         if (
             self["feed_price"] and
-            fabs(1 - float(self.getprice()) / self["feed_price"]) > self.bot["threshold"] / 100.0
+            fabs(1 - float(self.getprice()) / self["feed_price"]) > self.bot.get("threshold",5) / 100.0
         ):
             log.info("Price feed moved by more than the threshold. Updating orders!")
             self.updateorders()

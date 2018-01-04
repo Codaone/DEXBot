@@ -4,6 +4,9 @@ log = logging.getLogger(__name__)
 
 
 class Echo(BaseStrategy):
+
+    configure = [] # we don't need extra config
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
