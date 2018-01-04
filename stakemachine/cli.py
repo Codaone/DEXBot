@@ -15,7 +15,7 @@ from .ui import (
     alert,
 )
 from stakemachine.bot import BotInfrastructure
-from stakemachine.configure import configure_stakemachine, QuitException
+from stakemachine.cli_conf import configure_stakemachine, QuitException
 
 log = logging.getLogger(__name__)
 

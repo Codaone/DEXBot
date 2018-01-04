@@ -1,35 +1,29 @@
 """
-A module to provide an interactive process for stakemachine configuration
-Requires a working dialog tool: so UNIX-like sytems only
+A module to provide an interactive text-based tool for stakemachine configuration
+The result is takemachine can be run without having to hand-edit config files.
+If systemd is detected it will offer to install a user service unit (under ~/.local/share/systemd
+This requires a per-user systemd process to be runnng
+
+Requires the 'dialog' tool: so UNIX-like sytems only
+
+Note there is some common cross-UI configuration stuff: look in basestrategy.py
+It's expected GUI/web interfaces will be re-implementing code in this file, but they should
+understand the common code so bot strategy writers can define their configuration once
+for each strategy class.
+
 """
 
 
 import dialog, importlib, os, os.path, sys, collections, re
 
-ConfigElement = collections.namedtuple('ConfigElement','key type default description extra')
-# bots need to specify there own configuration values
-# I want this to be UI-agnostic so a future web or GUI interface can use it too
-# so each bot can have a class attribute 'configuration' which is a list of ConfigElement
-# named tuples
-# key: the key in the bot config dictionary that gets saved back to config.yml
-# type: one of "int", "float", "bool", "string", "choice"
-# default: the default value. must be right type.
-# description: comments to user, full sentences encouraged 
-# extra: 
-#       for int / float: a (min, max) tuple
-#       for string: a regular expression, entries must match it, can be None which equivalent to .*
-#       for bool, ignored
-#       for choice: a list of choices, choices are in turn (tag, label) tuples. labels get presented to user, and tag is used
-#       as the value
+from stakemachine.bot import STRATEGIES
+
 
 NODES=[("wss://openledger.hk/ws", "OpenLedger"),
        ("wss://dexnode.net/ws", "DEXNode"),
        ("wss://node.bitshares.eu/ws", "BitShares.EU"),
        ("wss://node.testnet.bitshares.eu","BitShares.EU testnet")]
 
-STRATEGIES={'Echo':('stakemachine.strategies.echo','Echo'),
-            'Liquidity Walls':('stakemachine.strategies.walls','Walls'),
-            'Storage Demo':('stakemachine.strategies.storagedemo','StorageDemo')}
 
 SYSTEMD_SERVICE_NAME=os.path.expanduser("~/.local/share/systemd/user/stakemachine.service")
 
@@ -125,29 +119,27 @@ def setup_systemd(d,config):
     
 
 def configure_bot(d,bot):
-    process_config_element(ConfigElement("account","string","","BitShares account name for the bot to operate with",""),d,bot)
-    process_config_element(ConfigElement("market","string","USD:BTS","BitShares market to operate on, in the format ASSET:OTHERASSET, for example \"USD:BTS\"","[A-Z]+:[A-Z]+"),d,bot)
     if 'module' in bot:
         inv_map = {v:k for k,v in STRATEGIES.items()}
         strategy = inv_map[(bot['module'],bot['bot'])]
     else:
-        strategy = None
+        strategy = 'Echo'
     code, tag = d.radiolist("Choose a bot strategy",
                             choices=select_choice(strategy,[(i,i) for i in STRATEGIES]))
     if code != d.OK: raise QuitException()
     bot['module'], bot['bot'] = STRATEGIES[tag]
-    # import the bot class but don't run it
+    # import the bot class but we don't __init__ it here
     klass = getattr(
         importlib.import_module(bot["module"]),
         bot["bot"]
     )
-    # check if a class attribute configure exists
-    # if so use this as very basic metadata for per-bot configuration
-    if hasattr(klass,"configure"):
-        for c in klass.configure:
+    # use class metadata for per-bot configuration
+    configs = klass.configure()
+    if configs:
+        for c in configs:
             process_config_element(c,d,bot)
     else:
-        d.msgbox("This bot does not have configuration information. You will have to check the bot code and add configuration values if required")
+        d.msgbox("This bot type does not have configuration information. You will have to check the bot code and add configuration values to config.yml if required")
     return bot
 
                             
@@ -155,9 +147,12 @@ def configure_bot(d,bot):
 def configure_stakemachine(config):
     d = dialog.Dialog(dialog="dialog",autowidgetsize=True)
     d.set_background_title("stakemachine configuration")
-    code, tag = d.radiolist("Choose a Witness node to use",
+    tag = ""
+    while not tag:
+        code, tag = d.radiolist("Choose a Witness node to use",
                        choices=select_choice(config.get("node"),NODES))
-    if code != d.OK: raise QuitException()
+        if code != d.OK: raise QuitException()
+        if not tag: d.msgbox("You need to choose a node")
     config['node'] = tag
     bots = config.get('bots',{})
     if len(bots) == 0:

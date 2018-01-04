@@ -7,6 +7,11 @@ from bitshares.notify import Notify
 from bitshares.instance import shared_bitshares_instance
 log = logging.getLogger(__name__)
 
+# FIXME: currently static list of bot strategies: ? how to enumerate bots available and deploy new bot strategies.
+STRATEGIES={'Echo':('stakemachine.strategies.echo','Echo'),
+            'Liquidity Walls':('stakemachine.strategies.walls','Walls'),
+            'Storage Demo':('stakemachine.strategies.storagedemo','StorageDemo')}
+
 
 class BotInfrastructure():
 
@@ -15,10 +20,7 @@ class BotInfrastructure():
     def __init__(
         self,
         config,
-        bitshares_instance=None,
-        interactive=True # if false suppress any user-interaction
-            # currently this is not used, but in future in case some of this code tries to interact
-            # with user: we can't when running as a daemon
+        bitshares_instance=None
     ):
         # BitShares instance
         self.bitshares = bitshares_instance or shared_bitshares_instance()
@@ -36,6 +38,8 @@ class BotInfrastructure():
 
             accounts.add(bot["account"])
             markets.add(bot["market"])
+            if "other_market" in bot: # some bots want to listen to two markets.
+                markets.add(bot["other_market"]) 
 
         # Create notification instance
         # Technically, this will multiplex markets and accounts and
@@ -63,6 +67,7 @@ class BotInfrastructure():
             self.bots[botname] = klass(
                 config=config,
                 name=botname,
+                #logger=logging.getLogger(__name__+'.'+botname), # each bot gets its own logger.
                 bitshares_instance=self.bitshares
             )
 
@@ -81,6 +86,7 @@ class BotInfrastructure():
                         exception=str(e),
                         stack=traceback.format_exc()
                     ))
+                self.bots[botname].disabled = True
 
     def on_market(self, data):
         if data.get("deleted", False):  # no info available on deleted orders
@@ -100,12 +106,13 @@ class BotInfrastructure():
                             exception=str(e),
                             stack=traceback.format_exc()
                         ))
+                    self.bots[botname].disabled = True
 
     def on_account(self, accountupdate):
         account = accountupdate.account
         for botname, bot in self.config["bots"].items():
             if self.bots[botname].disabled:
-                log.info("The bot %s has been disabled" % botname)
+                self.bot[botname].logger.info("The bot %s has been disabled" % botname)
                 continue
             if bot["account"] == account["name"]:
                 try:
@@ -121,3 +128,4 @@ class BotInfrastructure():
 
     def run(self):
         self.notify.listen()
+
