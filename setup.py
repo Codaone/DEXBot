@@ -42,8 +42,8 @@ setup(
         "pyyaml",
         "sqlalchemy",
         "appdirs",
-        "pythonconfig",
-        "sdnotify"
+        "pythondialog",
+        "sdnotify" # dont worry it is a no-op on systemd systems
     ],
     include_package_data=True,
 )
