@@ -14,8 +14,11 @@ from .ui import (
     warning,
     alert,
 )
-from stakemachine.bot import BotInfrastructure
-from stakemachine.cli_conf import configure_stakemachine, QuitException
+
+
+from dexbot.bot import BotInfrastructure
+from dexbot.cli_conf import configure_stakemachine, QuitException
+
 
 log = logging.getLogger(__name__)
 

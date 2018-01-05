@@ -2,9 +2,9 @@ from math import fabs
 from pprint import pprint
 from collections import Counter
 from bitshares.amount import Amount
-from stakemachine.basestrategy import BaseStrategy
-from stakemachine.errors import InsufficientFundsError
-from stakemachine.configure import ConfigElement
+from dexbot.basestrategy import BaseStrategy
+from dexbot.errors import InsufficientFundsError
+from dexbot.configure import ConfigElement
 
 import logging
 log = logging.getLogger(__name__)

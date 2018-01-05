@@ -5,9 +5,9 @@ bots:
   module: "stakemachine.strategies.echo"
   bot: "Echo"
   market: GOLD:TEST
-  account: xeroc
+  account: codaonetest-1
  Demo:
   module: "stakemachine.strategies.storagedemo"
   bot: "StorageDemo"
   market: GOLD:TEST
-  account: xeroc
+  account: codaonetest-1

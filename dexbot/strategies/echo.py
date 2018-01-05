@@ -1,4 +1,4 @@
-from stakemachine.basestrategy import BaseStrategy
+from dexbot.basestrategy import BaseStrategy
 import logging
 log = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class Echo(BaseStrategy):
                       need to know the most recent block number, you
                       need to use ``bitshares.blockchain.Blockchain``
         """
-        print("new block:     %s" % i)
+        print("new1 block:     %s" % i)
         # raise ValueError("Testing disabling")
 
     def print_accountUpdate(self, i):

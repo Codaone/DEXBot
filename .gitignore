@@ -72,3 +72,5 @@ deprecated
 *.sqlite
 *.yaml
 *.yml
+venv/
+.idea/

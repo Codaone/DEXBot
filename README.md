@@ -1,14 +1,14 @@
-# StakeMachine
+# DEXBot
 
-Trading Bot Infrastructure for the BitShares Decentralized Exchange
+Trading Bot for the BitShares Decentralized Exchange
 (DEX).
 
 **Warning**: This is highly experimental code! Use at your OWN risk!
 
 ## Installation
 
-    git clone https://github.com/xeroc/stakemachine
-    cd stakemachine
+    git clone https://github.com/codaone/dexbot
+    cd dexbot
     python3 setup.py install
     # or
     python3 setup.py install --user
@@ -25,7 +25,7 @@ Add your account's private key to the pybitshares wallet using `uptick`
 
 ## Execution
 
-    stakemachine run
+    dexbot run
 
 # IMPORTANT NOTE
 

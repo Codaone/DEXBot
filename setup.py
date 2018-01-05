@@ -5,20 +5,19 @@ from setuptools import setup, find_packages
 VERSION = '0.0.6'
 
 setup(
-    name='stakemachine',
+    name='dexbot',
     version=VERSION,
-    description='Trading bot infrastructure for the DEX (BitShares)',
+    description='Trading bot for the DEX (BitShares)',
     long_description=open('README.md').read(),
-    download_url='https://github.com/xeroc/stakemachine/tarball/' + VERSION,
-    author='Fabian Schuh',
-    author_email='Fabian@chainsquad.com',
-    maintainer='Fabian Schuh',
-    maintainer_email='Fabian@chainsquad.com',
-    url='http://www.github.com/xeroc/stakemachine',
-    keywords=['stake', 'bot', 'trading', 'api', 'blog', 'blockchain'],
+    author='Codaone Oy',
+    author_email='support@codaone.com',
+    maintainer='Codaone Oy',
+    maintainer_email='support@codaone.com',
+    url='http://www.github.com/codaone/dexbot',
+    keywords=['bot', 'trading', 'api', 'blockchain'],
     packages=[
-        "stakemachine",
-        "stakemachine.strategies",
+        "dexbot",
+        "dexbot.strategies",
     ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
@@ -29,7 +28,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'stakemachine = stakemachine.cli:main',
+            'dexbot = dexbot.cli:main',
         ],
     },
     install_requires=[

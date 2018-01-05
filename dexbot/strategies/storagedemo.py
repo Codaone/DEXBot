@@ -1,4 +1,4 @@
-from stakemachine.basestrategy import BaseStrategy
+from dexbot.basestrategy import BaseStrategy
 
 
 class StorageDemo(BaseStrategy):

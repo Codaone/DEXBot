@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 
-from stakemachine import cli
+from dexbot import cli
 
 cli.main()
