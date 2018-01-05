@@ -7,10 +7,10 @@ from sqlalchemy.orm import sessionmaker
 from appdirs import user_data_dir
 Base = declarative_base()
 
-# For stakemachine.sqlite file
-appname = "stakemachine"
+# For dexbot.sqlite file
+appname = "dexbot"
 appauthor = "ChainSquad GmbH"
-storageDatabase = "stakemachine.sqlite"
+storageDatabase = "dexbot.sqlite"
 
 
 def mkdir_p(d):

@@ -17,7 +17,7 @@ from .ui import (
 
 
 from dexbot.bot import BotInfrastructure
-from dexbot.cli_conf import configure_stakemachine, QuitException
+from dexbot.cli_conf import configure_dexbot, QuitException
 
 
 log = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ def run(ctx):
 @click.pass_context
 @verbose
 def configure(ctx):
-    """ Interactively configure stakemachine
+    """ Interactively configure dexbot
     """
     if os.path.exists(ctx.obj['configfile']):
         with open(ctx.obj["configfile"]) as fd:
@@ -83,7 +83,7 @@ def configure(ctx):
     else:
         config = {}
     try:
-        configure_stakemachine(config)
+        configure_dexbot(config)
         click.clear()
         cfg_file = ctx.obj["configfile"]
         if not "/" in cfg_file: # use hoke directory by default.
@@ -93,12 +93,12 @@ def configure(ctx):
         click.echo("new configuration saved")
         if config['systemd_status'] == 'installed':
             # we are already installed
-            click.echo("restarting stakemachine daemon")
-            os.system("systemctl --user restart stakemachine")
+            click.echo("restarting dexbot daemon")
+            os.system("systemctl --user restart dexbot")
         if config['systemd_status'] == 'install':
-            os.system("systemctl --user enable stakemachine")
-            click.echo("starting stakemachine daemon")
-            os.system("systemctl --user start stakemachine")
+            os.system("systemctl --user enable dexbot")
+            click.echo("starting dexbot daemon")
+            os.system("systemctl --user start dexbot")
     except QuitException:
         click.echo("configuration exited: nothing changed")
         

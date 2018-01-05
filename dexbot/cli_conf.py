@@ -1,5 +1,5 @@
 """
-A module to provide an interactive text-based tool for stakemachine configuration
+A module to provide an interactive text-based tool for dexbot configuration
 The result is takemachine can be run without having to hand-edit config files.
 If systemd is detected it will offer to install a user service unit (under ~/.local/share/systemd
 This requires a per-user systemd process to be runnng
@@ -16,7 +16,7 @@ for each strategy class.
 
 import dialog, importlib, os, os.path, sys, collections, re
 
-from stakemachine.bot import STRATEGIES
+from dexbot.bot import STRATEGIES
 
 
 NODES=[("wss://openledger.hk/ws", "OpenLedger"),
@@ -25,7 +25,7 @@ NODES=[("wss://openledger.hk/ws", "OpenLedger"),
        ("wss://node.testnet.bitshares.eu","BitShares.EU testnet")]
 
 
-SYSTEMD_SERVICE_NAME=os.path.expanduser("~/.local/share/systemd/user/stakemachine.service")
+SYSTEMD_SERVICE_NAME=os.path.expanduser("~/.local/share/systemd/user/dexbot.service")
 
 SYSTEMD_SERVICE_FILE="""
 [Unit]
@@ -99,11 +99,11 @@ def setup_systemd(d,config):
     if not os.path.exists("/etc/systemd"):
         return # no working systemd
     if os.path.exists(SYSTEMD_SERVICE_NAME):
-        # stakemachine already installed
+        # dexbot already installed
         # so just tell cli.py to quietly restart the daemon
         config["systemd_status"] = "installed"
         return
-    if d.yesno("Do you want to install stakemachine as a background (daemon) process?") == d.OK:
+    if d.yesno("Do you want to install dexbot as a background (daemon) process?") == d.OK:
         for i in ["~/.local","~/.local/share","~/.local/share/systemd","~/.local/share/systemd/user"]:
             j = os.path.expanduser(i)
             if not os.path.exists(j):
@@ -144,9 +144,9 @@ def configure_bot(d,bot):
 
                             
     
-def configure_stakemachine(config):
+def configure_dexbot(config):
     d = dialog.Dialog(dialog="dialog",autowidgetsize=True)
-    d.set_background_title("stakemachine configuration")
+    d.set_background_title("dexbot configuration")
     tag = ""
     while not tag:
         code, tag = d.radiolist("Choose a Witness node to use",
