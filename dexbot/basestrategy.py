@@ -33,8 +33,8 @@ class BaseStrategy(Storage, StateMachine, Events):
 
         BaseStrategy inherits:
 
-        * :class:`stakemachine.storage.Storage`
-        * :class:`stakemachine.statemachine.StateMachine`
+        * :class:`dexbot.storage.Storage`
+        * :class:`dexbot.statemachine.StateMachine`
         * ``Events``
 
         Available attributes:
@@ -50,7 +50,7 @@ class BaseStrategy(Storage, StateMachine, Events):
          * ``basestrategy.log``: a per-bot logger (actually LoggerAdapter) adds bot-specific context: botname & account
            (Because some UIs might want to display per-bot logs)
 
-        Also, Base Strategy inherits :class:`stakemachine.storage.Storage`
+        Also, Base Strategy inherits :class:`dexbot.storage.Storage`
         which allows to permanently store data in a sqlite database
         using:
 
@@ -98,6 +98,7 @@ class BaseStrategy(Storage, StateMachine, Events):
     @classmethod
     def get_subclasses(cls):
         """Iterator returning all subclasses"""
+        # FIXME: not used but may be future basis for autodetecting available strategies
         # weird Python 3 magic
         for subclass in cls.__subclasses__():
             yield from subclass.get_subclasses()
@@ -166,7 +167,7 @@ class BaseStrategy(Storage, StateMachine, Events):
         self.disabled = False
 
         # a private logger that adds bot identify data to the LogRecord
-        self.log = logging.LoggerAdapter(logging.getLogger('stakemachine.bots'),{'botname':name,
+        self.log = logging.LoggerAdapter(logging.getLogger('dexbot.per_bot'),{'botname':name,
                                                                                  'account':self.bot['account'],
                                                                                  'market':self.bot['market'],
                                                                                  'is_disabled':(lambda: self.disabled)})

@@ -7,29 +7,19 @@ from bitshares.notify import Notify
 from bitshares.instance import shared_bitshares_instance
 
 log = logging.getLogger(__name__)
-# NOTE there is a logger called "stakeachine.bots' which is diffeent to this one: a special logger for per-bot events
-# the per-bot logger returns LogRecords with extra fields: botname, account, market and is_disabled
+
+log_bots = logging.getLogger('dexbot.per_bot')
+# NOTE this is the  special logger for per-bot events
+# it  returns LogRecords with extra fields: botname, account, market and is_disabled
 # is_disabled is a callable returning True if the bot is currently disabled.
 # GUIs can add a handler to this logger to get a stream of events re the running bots.
 
 
 # FIXME: currently static list of bot strategies: ? how to enumerate bots available and deploy new bot strategies.
-STRATEGIES={'Echo':('','Echo'),
-            'Liquidity Walls':('','Walls'),
-            'Storage Demo':('','StorageDemo')}
+STRATEGIES={'Echo':('dexbot.strategies.echo','Echo'),
+            'Liquidity Walls':('dexbot.strategies.walls','Walls'),
+            'Storage Demo':('dexbot.strategies.storagedemo','StorageDemo')}
 
-
-def get_all_strategies():
-    # import the standard bots
-    import stakemachine.strategies.echo
-    import stakemachine.strategies.walls
-    import stakemachine.strategies.storagedemo
-    
-    # set the module search path
-    userbotpath = os.path.expanduser("~/bots")
-    if os.path.exists(userbotpath):
-        sys.path.append(userbotpath)
-    
 
 class BotInfrastructure():
 
@@ -50,13 +40,19 @@ class BotInfrastructure():
         markets = set()
 
         
+        # set the module search path
+        userbotpath = os.path.expanduser("~/bots")
+        if os.path.exists(userbotpath):
+            sys.path.append(userbotpath)
+
+        
         # Initialize bots:
         for botname, bot in config["bots"].items():
             if "account" not in bot:
-                getLogger("stakemachine.bots").critical("Bot has no account",extra={'botname':botname,'account':'unknown','market':'unknown','is_dsabled':(lambda: True)})
+                log_bots.critical("Bot has no account",extra={'botname':botname,'account':'unknown','market':'unknown','is_dsabled':(lambda: True)})
                 continue
             if "market" not in bot:
-                getLogger("stakemachine.bots").critical("Bot has no market",extra={'botname':botname,'account':bot['account'],'market':'unknown','is_disabled':(lambda: True)})
+                log_bots.critical("Bot has no market",extra={'botname':botname,'account':bot['account'],'market':'unknown','is_disabled':(lambda: True)})
                 continue
             try:
                 klass = getattr(
@@ -71,7 +67,7 @@ class BotInfrastructure():
                 markets |= set(self.bots[botname].all_markets())
                 accounts.add(bot['account'])
             except:
-                getLogger("stakemachine.bots").exception("Bot initialisation",extra={'botname':botname,'account':bot['account'],'market':'unknown','is_disabled':(lambda: True)})
+                log_bots.exception("Bot initialisation",extra={'botname':botname,'account':bot['account'],'market':'unknown','is_disabled':(lambda: True)})
 
         # Create notification instance
         # Technically, this will multiplex markets and accounts and

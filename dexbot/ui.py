@@ -33,13 +33,13 @@ def verbose(f):
         ch = logging.StreamHandler()
         ch.setLevel(getattr(logging, verbosity.upper()))
         ch.setFormatter(formatter2)
-        logging.getLogger("stakemachine.bots").addHandler(ch)
-        logging.getLogger("stakemachine.bots").propagate = False # don't double up with root logger
+        logging.getLogger("dexbot.per_bot").addHandler(ch)
+        logging.getLogger("dexbot.per_bot").propagate = False # don't double up with root logger
         # set the root logger with basic format
         ch = logging.StreamHandler()
         ch.setLevel(getattr(logging, verbosity.upper()))
         ch.setFormatter(formatter1)
-        logging.getLogger("stakemachine").addHandler(ch)
+        logging.getLogger("dexbot").addHandler(ch)
         
         # GrapheneAPI logging
         if ctx.obj["verbose"] > 4:
