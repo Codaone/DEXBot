@@ -19,6 +19,7 @@ from stakemachine.cli_conf import configure_stakemachine, QuitException
 
 log = logging.getLogger(__name__)
 
+# inital logging before proper setup.
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s'
@@ -57,7 +58,7 @@ def main(ctx, **kwargs):
 def run(ctx):
     """ Continuously run the bot
     """
-    bot = BotInfrastructure(ctx.config,interactive=not ctx.obj['systemd'])
+    bot = BotInfrastructure(ctx.config)
     if ctx.obj['systemd']:
         try:
             import sdnotify # a soft dependency on sdnotify -- don't crash on non-systemd systems

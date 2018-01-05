@@ -8,8 +8,6 @@ from .storage import Storage
 from .statemachine import StateMachine
 
 
-log = logging.getLogger(__name__)
-
 ConfigElement = collections.namedtuple('ConfigElement','key type default description extra')
 # bots need to specify their own configuration values
 # I want this to be UI-agnostic so a future web or GUI interface can use it too
@@ -49,8 +47,9 @@ class BaseStrategy(Storage, StateMachine, Events):
          * ``basestrategy.market``: The market used by this bot
          * ``basestrategy.orders``: List of open orders of the bot's account in the bot's market
          * ``basestrategy.balance``: List of assets and amounts available in the bot's account
-
+         * ``basestrategy.log``: a per-bot logger (actually LoggerAdapter) adds bot-specific context: botname & account
            (Because some UIs might want to display per-bot logs)
+
         Also, Base Strategy inherits :class:`stakemachine.storage.Storage`
         which allows to permanently store data in a sqlite database
         using:
@@ -85,7 +84,7 @@ class BaseStrategy(Storage, StateMachine, Events):
         User interfaces should then generate widgets based on this values, gather
         data and save back to the config dictionary for the bot.
 
-        NOTE: when overriding you almost certainly will want to call the anscestor
+        NOTE: when overriding you almost certainly will want to call the ancestor
         and then add your config values to the list.
 
         The list can be empty, in which case UIs should warn the user
@@ -96,6 +95,16 @@ class BaseStrategy(Storage, StateMachine, Events):
             ConfigElement("market","string","USD:BTS","BitShares market to operate on, in the format ASSET:OTHERASSET, for example \"USD:BTS\"","[A-Z]+:[A-Z]+")
         ]
 
+    @classmethod
+    def get_subclasses(cls):
+        """Iterator returning all subclasses"""
+        # weird Python 3 magic
+        for subclass in cls.__subclasses__():
+            yield from subclass.get_subclasses()
+            yield subclass
+
+
+    
     def __init__(
         self,
         config,
@@ -145,7 +154,7 @@ class BaseStrategy(Storage, StateMachine, Events):
             bitshares_instance=self.bitshares
         )
         self._market = Market(
-            config["bots"][name]["market"],
+            self.bot["market"],
             bitshares_instance=self.bitshares
         )
 
@@ -156,6 +165,18 @@ class BaseStrategy(Storage, StateMachine, Events):
         # will be reset to False after reset only
         self.disabled = False
 
+        # a private logger that adds bot identify data to the LogRecord
+        self.log = logging.LoggerAdapter(logging.getLogger('stakemachine.bots'),{'botname':name,
+                                                                                 'account':self.bot['account'],
+                                                                                 'market':self.bot['market'],
+                                                                                 'is_disabled':(lambda: self.disabled)})
+    def all_markets(self):
+        """Return a list of all markets this bot wants to listen to
+        This implementation returns just the one 'primary market' from config value 'market'
+        (Some strategies might want to listen to two or more markets)
+        """
+        return [self.bot['market']]
+    
     @property
     def orders(self):
         """ Return the bot's open accounts in the current market
