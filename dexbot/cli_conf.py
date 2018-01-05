@@ -29,7 +29,7 @@ SYSTEMD_SERVICE_NAME=os.path.expanduser("~/.local/share/systemd/user/dexbot.serv
 
 SYSTEMD_SERVICE_FILE="""
 [Unit]
-Description=Stakemachine
+Description=Dexbot
 
 [Service]
 Type=notify

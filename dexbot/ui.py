@@ -20,14 +20,14 @@ def verbose(f):
         if ctx.obj.get("systemd",False):
             # dont print the timestamps: systemd will log it for us
             formatter1 = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-            formatter2 = logging.Formatter('bot %(botname)s (acct %(account)s) on %(market)s - %(levelname)s - %(message)s')
+            formatter2 = logging.Formatter('bot %(botname)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
         elif verbosity == "debug":
             # when debugging log where the log call came from
             formatter1 = logging.Formatter('%(asctime)s (%(module)s:%(lineno)d) - %(levelname)s - %(message)s')
-            formatter2 = logging.Formatter('%(asctime)s (%(module)s:%(lineno)d) - bot %(botname)s (acct %(account)s) on %(market)s - %(levelname)s - %(message)s')           
+            formatter2 = logging.Formatter('%(asctime)s (%(module)s:%(lineno)d) - bot %(botname)s - %(levelname)s - %(message)s')           
         else:
             formatter1 = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            formatter2 = logging.Formatter('%(asctime)s - bot %(botname)s (acct %(account)s) on %(market)s - %(levelname)s - %(message)s')
+            formatter2 = logging.Formatter('%(asctime)s - bot %(botname)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
 
         # use special format for special bots logger
         ch = logging.StreamHandler()
