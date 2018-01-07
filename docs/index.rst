@@ -1,5 +1,5 @@
-Welcome to StakeMachine's documentation!
-========================================
+Welcome to DEXBot's documentation!
+==================================
 
 Basics
 ------
