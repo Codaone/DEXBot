@@ -17,8 +17,7 @@ log_bots = logging.getLogger('dexbot.per_bot')
 
 # FIXME: currently static list of bot strategies: ? how to enumerate bots available and deploy new bot strategies.
 STRATEGIES={'Echo':('dexbot.strategies.echo','Echo'),
-            'Liquidity Walls':('dexbot.strategies.walls','Walls'),
-            'Storage Demo':('dexbot.strategies.storagedemo','StorageDemo')}
+            'Liquidity Walls':('dexbot.strategies.walls','Walls')}
 
 
 class BotInfrastructure():

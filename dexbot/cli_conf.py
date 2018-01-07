@@ -21,8 +21,7 @@ from dexbot.bot import STRATEGIES
 
 NODES=[("wss://openledger.hk/ws", "OpenLedger"),
        ("wss://dexnode.net/ws", "DEXNode"),
-       ("wss://node.bitshares.eu/ws", "BitShares.EU"),
-       ("wss://node.testnet.bitshares.eu","BitShares.EU testnet")]
+       ("wss://node.bitshares.eu/ws", "BitShares.EU")]
 
 
 SYSTEMD_SERVICE_NAME=os.path.expanduser("~/.local/share/systemd/user/dexbot.service")
