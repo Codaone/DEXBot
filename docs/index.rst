@@ -24,8 +24,8 @@ Developing own Strategies
 .. toctree::
    :maxdepth: 1
 
+   manual
    basestrategy
-   configuration
    storage
    statemachine
    events

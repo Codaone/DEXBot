@@ -51,28 +51,3 @@ Easy Configuration
 This will walk you through the configuration process.
 Read more about this in the :doc:`configuration`.
 
-If ``systemd``
-is available it will offer to install a user service to automatically
-run dexbot in the background.
-
-Manual Configuration
---------------------
-
-You will need to create configuration file in YAML format. The default
-file name is ``config.yml``, otherwise you can specify a different
-config file using the ``--configfile X`` parameter of ``dexbot``.
-
-
-Manual Running
---------------
-
-If you are not using systemd, the bot can be run manually by::
-
-    dexbot run
-
-It will ask for your wallet passphrase (that you have provide when
-adding your private key to pybitshares using ``uptick addkey``).
-
-If you want to prevent the password dialog, you can predefine an
-environmental variable ``UNLOCK``, if you understand the security
-implications.
