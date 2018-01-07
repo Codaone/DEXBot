@@ -60,7 +60,7 @@ Manual Configuration
 
 You will need to create configuration file in YAML format. The default
 file name is ``config.yml``, otherwise you can specify a different
-config file using the ``--configfile X`` parameter of ``stakemachine``.
+config file using the ``--configfile X`` parameter of ``dexbot``.
 
 
 Manual Running

@@ -19,7 +19,7 @@ Example Configuration
             Walls:
 
                  # The Walls strategy module and class
-                 module: stakemachine.strategies.walls
+                 module: dexbot.strategies.walls
                  bot: Walls
 
                  # The market to serve

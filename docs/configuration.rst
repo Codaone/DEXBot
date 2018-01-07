@@ -73,7 +73,7 @@ need to edit this. It takes the following form:
 
             # Python module to look for the strategy (can be custom)
 	    # dexbot will search in ~/bots as well as standard dirs 
-	    module: "stakemachine.strategies.echo"
+	    module: "dexbot.strategies.echo"
 
             # The bot class in that module to use
             bot: Echo

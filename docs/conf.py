@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'StakeMachine'
+project = 'DEXBot'
 copyright = '2017, ChainSquad GmbH'
 author = 'Fabian Schuh'
 
@@ -254,7 +254,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'stakemachine', 'StakeMachine Documentation',
+    (master_doc, 'dexbot', 'StakeMachine Documentation',
      [author], 1)
 ]
 

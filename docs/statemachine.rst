@@ -12,5 +12,5 @@ inherited by :doc:`basestrategy`.
 API
 ---
 
-.. autoclass:: stakemachine.statemachine.StateMachine
+.. autoclass:: dexbot.statemachine.StateMachine
    :members:
