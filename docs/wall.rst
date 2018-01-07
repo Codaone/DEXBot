@@ -58,6 +58,6 @@ Example Configuration
 
 Source Code
 -----------
-.. literalinclude:: ../stakemachine/strategies/walls.py
+.. literalinclude:: ../dexbot/strategies/walls.py
    :language: python
    :linenos:
