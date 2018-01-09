@@ -3,7 +3,7 @@ Storage
 *******
 
 This class allows to permanently store bot-specific data in a sqlite
-database (``stakemachine.sqlite``) using:
+database (``dexbot.sqlite``) using:
 
 ``self["key"] = "value"``
 
@@ -33,7 +33,7 @@ The user's data is stored in its OS protected user directory:
 
  * `~/.local/share/<AppName>`
 
-Where ``<AppName>`` is ``stakemachine`` and ``<AppAuthor>`` is
+Where ``<AppName>`` is ``dexbot`` and ``<AppAuthor>`` is
 ``ChainSquad GmbH``.
 
 
@@ -41,7 +41,7 @@ Simple example
 --------------
 
 
-.. literalinclude:: ../stakemachine/strategies/storagedemo.py
+.. literalinclude:: ../dexbot/strategies/storagedemo.py
    :language: python
    :linenos:
 

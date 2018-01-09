@@ -3,11 +3,11 @@ Base Strategy
 *************
 
 All strategies should inherit
-:class:`stakemachine.basestrategy.BaseStrategy` which simplifies and
+:class:`dexbot.basestrategy.BaseStrategy` which simplifies and
 unifies the development of new strategies.
 
 API
 ---
 
-.. autoclass:: stakemachine.basestrategy.BaseStrategy
+.. autoclass:: dexbot.basestrategy.BaseStrategy
    :members:

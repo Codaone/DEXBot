@@ -4,11 +4,11 @@ Simple Echo Strategy
 
 API
 ---
-.. autoclass:: stakemachine.strategies.echo.Echo
+.. autoclass:: dexbot.strategies.echo.Echo
    :members:
 
 Full Source Code
 ----------------
-.. literalinclude:: ../stakemachine/strategies/echo.py
+.. literalinclude:: ../dexbot/strategies/echo.py
    :language: python
    :linenos:

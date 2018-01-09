@@ -5,27 +5,9 @@ Trading Bot for the BitShares Decentralized Exchange
 
 **Warning**: This is highly experimental code! Use at your OWN risk!
 
-## Installation
+## Usage
 
-    git clone https://github.com/codaone/dexbot
-    cd dexbot
-    python3 setup.py install
-    # or
-    python3 setup.py install --user
-
-## Configuration
-
-Configuration happens in `config.yml`
-
-## Requirements
-
-Add your account's private key to the pybitshares wallet using `uptick`
-
-    uptick addkey
-
-## Execution
-
-    dexbot run
+Please refer to the [documentation](docs/setup.rst)
 
 # IMPORTANT NOTE
 

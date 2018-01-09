@@ -4,6 +4,8 @@ log = logging.getLogger(__name__)
 
 
 class Echo(BaseStrategy):
+
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -33,7 +35,7 @@ class Echo(BaseStrategy):
 
             :param bitshares.price.FilledOrder i: Filled order details
         """
-        print("order matched: %s" % i)
+        self.log.info("order matched: %s" % i)
 
     def print_orderPlaced(self, i):
         """ Is called when a new order in the market is placed
@@ -43,7 +45,7 @@ class Echo(BaseStrategy):
 
             :param bitshares.price.Order i: Order details
         """
-        print("order placed:  %s" % i)
+        self.log.info("order placed:  %s" % i)
 
     def print_UpdateCallOrder(self, i):
         """ Is called when a call order for a market pegged asset is updated
@@ -53,7 +55,7 @@ class Echo(BaseStrategy):
 
             :param bitshares.price.CallOrder i: Call order details
         """
-        print("call update:   %s" % i)
+        self.log.info("call update:   %s" % i)
 
     def print_marketUpdate(self, i):
         """ Is called when Something happens in your market.
@@ -64,7 +66,7 @@ class Echo(BaseStrategy):
 
             :param object i: Can be instance of ``FilledOrder``, ``Order``, or ``CallOrder``
         """
-        print("marketupdate:  %s" % i)
+        self.log.info("marketupdate:  %s" % i)
 
     def print_newBlock(self, i):
         """ Is called when a block is received
@@ -76,7 +78,7 @@ class Echo(BaseStrategy):
                       need to know the most recent block number, you
                       need to use ``bitshares.blockchain.Blockchain``
         """
-        print("new1 block:     %s" % i)
+        self.log.info("new1 block:     %s" % i)
         # raise ValueError("Testing disabling")
 
     def print_accountUpdate(self, i):
@@ -84,4 +86,4 @@ class Echo(BaseStrategy):
             any update. This includes anything that changes
             ``2.6.xxxx``, e.g., any operation that affects your account.
         """
-        print("account:       %s" % i)
+        self.log.info("account:       %s" % i)

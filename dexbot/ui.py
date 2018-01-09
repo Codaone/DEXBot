@@ -1,4 +1,4 @@
-import os
+import os, sys
 import click
 import logging
 import yaml
@@ -14,17 +14,33 @@ log = logging.getLogger(__name__)
 def verbose(f):
     @click.pass_context
     def new_func(ctx, *args, **kwargs):
-        global log
         verbosity = [
             "critical", "error", "warn", "info", "debug"
         ][int(min(ctx.obj.get("verbose", 0), 4))]
-        log.setLevel(getattr(logging, verbosity.upper()))
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        if ctx.obj.get("systemd",False):
+            # dont print the timestamps: systemd will log it for us
+            formatter1 = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+            formatter2 = logging.Formatter('bot %(botname)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
+        elif verbosity == "debug":
+            # when debugging log where the log call came from
+            formatter1 = logging.Formatter('%(asctime)s (%(module)s:%(lineno)d) - %(levelname)s - %(message)s')
+            formatter2 = logging.Formatter('%(asctime)s (%(module)s:%(lineno)d) - bot %(botname)s - %(levelname)s - %(message)s')           
+        else:
+            formatter1 = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            formatter2 = logging.Formatter('%(asctime)s - bot %(botname)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
+
+        # use special format for special bots logger
         ch = logging.StreamHandler()
         ch.setLevel(getattr(logging, verbosity.upper()))
-        ch.setFormatter(formatter)
-        log.addHandler(ch)
-
+        ch.setFormatter(formatter2)
+        logging.getLogger("dexbot.per_bot").addHandler(ch)
+        logging.getLogger("dexbot.per_bot").propagate = False # don't double up with root logger
+        # set the root logger with basic format
+        ch = logging.StreamHandler()
+        ch.setLevel(getattr(logging, verbosity.upper()))
+        ch.setFormatter(formatter1)
+        logging.getLogger("dexbot").addHandler(ch)
+        
         # GrapheneAPI logging
         if ctx.obj["verbose"] > 4:
             verbosity = [
@@ -52,7 +68,7 @@ def chain(f):
         ctx.bitshares = BitShares(
             ctx.config["node"],
             **ctx.obj
-        )
+        )        
         set_shared_bitshares_instance(ctx.bitshares)
         return ctx.invoke(f, *args, **kwargs)
     return update_wrapper(new_func, f)
@@ -62,13 +78,22 @@ def unlock(f):
     @click.pass_context
     def new_func(ctx, *args, **kwargs):
         if not ctx.obj.get("unsigned", False):
+            systemd = ctx.obj.get('systemd',False)
             if ctx.bitshares.wallet.created():
                 if "UNLOCK" in os.environ:
                     pwd = os.environ["UNLOCK"]
                 else:
+                    if systemd:
+                        # no user available to interact with
+                        log.critical("Passphrase not available, exiting")
+                        sys.exit(78) # 'configuation error' in systexits.h
                     pwd = click.prompt("Current Wallet Passphrase", hide_input=True)
                 ctx.bitshares.wallet.unlock(pwd)
             else:
+                if systemd:
+                    # no user available to interact with
+                    log.critical("Wallet not installed, cannot run")
+                    sys.exit(78)
                 click.echo("No wallet installed yet. Creating ...")
                 pwd = click.prompt("Wallet Encryption Passphrase", hide_input=True, confirmation_prompt=True)
                 ctx.bitshares.wallet.create(pwd)

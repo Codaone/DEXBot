@@ -2,6 +2,9 @@ from dexbot.basestrategy import BaseStrategy
 
 
 class StorageDemo(BaseStrategy):
+
+    configure = [] # don't need extra config
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ontick += self.tick

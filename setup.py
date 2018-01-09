@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-VERSION = '0.0.6'
+VERSION = '0.0.7'
 
 setup(
     name='dexbot',
@@ -41,7 +41,9 @@ setup(
         "tqdm",
         "pyyaml",
         "sqlalchemy",
-        "appdirs"
+        "appdirs",
+        "pythondialog",
+        "sdnotify" # dont worry it is a no-op on systemd systems
     ],
     include_package_data=True,
 )

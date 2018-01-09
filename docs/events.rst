@@ -3,7 +3,7 @@ Events
 ******
 
 The websocket endpoint of BitShares has notifications that are
-subscribed to and dispatched by ``stakemachine``. This uses python's
+subscribed to and dispatched by ``dexbot``. This uses python's
 native ``Events``. The following events are available in your
 strategies and depend on the configuration of your bot/strategy:
 
