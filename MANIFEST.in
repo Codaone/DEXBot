@@ -1,1 +1,5 @@
 include *.md
+include app.py
+include cli.py
+include config.yml
+include dexbot/resources/img/*

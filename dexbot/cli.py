@@ -4,7 +4,8 @@ import os
 import signal
 import sys
 
-from .ui import (
+from dexbot import config_file
+from dexbot.ui import (
     verbose,
     chain,
     unlock,
@@ -26,7 +27,7 @@ logging.basicConfig(
 @click.group()
 @click.option(
     "--configfile",
-    default="config.yml",
+    default=config_file,
 )
 @click.option(
     '--verbose',

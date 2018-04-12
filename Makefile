@@ -1,6 +1,9 @@
 .PHONY: clean-pyc clean-build docs
 
-clean: clean-build clean-pyc
+clean: clean-build clean-pyc clean-ui
+
+clean-ui:
+	find dexbot/views/ui/*.py ! -name '__init__.py' -type f -exec rm -f {} +
 
 clean-build:
 	rm -fr build/
@@ -18,7 +21,7 @@ pip:
 lint:
 	flake8 dexbot/
 
-build: pip
+build: clean pip
 	python3 setup.py build
 
 install: build
@@ -35,10 +38,10 @@ check: pip
 	python3 setup.py check
 
 package: build
-	pyinstaller app.spec
+	pyinstaller gui.spec
 	pyinstaller cli.spec
 
-dist: pip
+dist: build
 	python3 setup.py sdist upload -r pypi
 	python3 setup.py bdist_wheel upload
 

@@ -13,7 +13,7 @@ install:
   - make install
 script:
   - echo "@TODO - Running tests..."
-  - pyinstaller --distpath dist/$TRAVIS_OS_NAME app.spec
+  - pyinstaller --distpath dist/$TRAVIS_OS_NAME gui.spec
   - pyinstaller --distpath dist/$TRAVIS_OS_NAME cli.spec
 before_deploy:
   - git config --local user.name "Travis"
