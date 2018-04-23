@@ -1,8 +1,7 @@
 # Hook for pycryptodome extensions
 
 hiddenimports = [
- 'scrypt._scrypt',
- 'Crypto.Protocol._scrypt',
+ '_scrypt',
  'Crypto.Cipher._chacha20',
  'Crypto.Cipher._raw_aes',
  'Crypto.Cipher._raw_ecb',
@@ -11,3 +10,4 @@ hiddenimports = [
  'Crypto.Util._cpuid',
  'Crypto.Util._strxor'
 ]
+
