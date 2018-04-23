@@ -18,7 +18,7 @@ hiddenimports_packaging = [
 ]
 
 add_datas = []
-if sys.platform == 'win32':
+if sys.platform[:3] == 'win':
     add_datas = [
         ('.\lib\libsodium.dll', '.')
     ]
