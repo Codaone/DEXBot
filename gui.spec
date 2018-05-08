@@ -17,10 +17,16 @@ hiddenimports_packaging = [
     'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'
 ]
 
+add_datas = []
+if sys.platform[:3] == 'win':
+    add_datas = [
+        ('.\lib\libsodium.dll', '.')
+    ]
+
 a = Analysis(['dexbot/gui.py'],
              binaries=[],
-             datas=[],
-             hiddenimports=hiddenimports_packaging + hiddenimports_strategies + ['_scrypt'],
+             datas=add_datas,
+             hiddenimports=hiddenimports_packaging + hiddenimports_strategies,
              hookspath=['hooks'],
              runtime_hooks=['hooks/rthook-Crypto.py'],
              excludes=[],
