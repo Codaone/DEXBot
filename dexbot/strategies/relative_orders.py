@@ -62,7 +62,7 @@ class Strategy(BaseStrategy):
         if self.is_center_price_dynamic:
             self.center_price = self.calculate_relative_center_price(self.worker['spread'], self['order_ids'])
 
-        self.buy_price = self.center_price * (1 - (self.worker["spread"] / 2) / 100)
+        self.buy_price = self.center_price / (1 + (self.worker["spread"] / 2) / 100)
         self.sell_price = self.center_price * (1 + (self.worker["spread"] / 2) / 100)
 
     def error(self, *args, **kwargs):
