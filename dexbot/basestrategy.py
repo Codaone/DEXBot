@@ -180,10 +180,16 @@ class BaseStrategy(Storage, StateMachine, Events):
                 percentage = 0.5
             else:
                 percentage = (total_balance['base'] / total)
-            center_price = (highest_bid + lowest_ask) / 2
-            lowest_price = center_price * (1 - spread / 100)
+            center_price = highest_bid * math.sqrt(lowest_ask/highest_bid)
+            lowest_price = center_price / (1 + spread / 100)
             highest_price = center_price * (1 + spread / 100)
-            relative_center_price = ((highest_price - lowest_price) * percentage) + lowest_price
+            if percentage  >= 0.67:
+                relative_center_price = center_price * (1 + spread/210)
+            else if percentage <= 0.33:
+                relative_center_price = center_price / (1 + spread/210)
+            else:
+                relative_center_price = center_price
+            # old ((highest_price - lowest_price) * percentage) + lowest_price
             return relative_center_price
 
     @property
