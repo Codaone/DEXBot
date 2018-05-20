@@ -185,7 +185,7 @@ class BaseStrategy(Storage, StateMachine, Events):
             highest_price = center_price * (1 + spread / 100)
             if percentage  >= 0.67:
                 relative_center_price = center_price * (1 + spread/210)
-            else if percentage <= 0.33:
+            elif percentage <= 0.33:
                 relative_center_price = center_price / (1 + spread/210)
             else:
                 relative_center_price = center_price
