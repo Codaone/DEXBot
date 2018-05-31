@@ -42,6 +42,9 @@ class Strategy(BaseStrategy):
         self.cancel_all()
         self.disabled = True
 
+    def clean_exit(self):
+        self.log.info("Performing clean exit, leaving orders")
+
     def init_strategy(self):
         # Make sure no orders remain
         self.cancel_all()

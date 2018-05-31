@@ -333,6 +333,12 @@ class BaseStrategy(Storage, StateMachine, Events):
             self.cancel(self.orders)
         self.log.info("Orders canceled")
 
+    def clean_exit(self):
+        """ Worker stop/exit wrapper. It should perform cleanup actions when terminating the bot.
+            By default, just call cancel_all().
+        """
+        self.cancel_all()
+
     def market_buy(self, amount, price, return_none=False):
         symbol = self.market['base']['symbol']
         precision = self.market['base']['precision']

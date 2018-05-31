@@ -174,7 +174,12 @@ class WorkerInfrastructure(threading.Thread):
         self.update_notify()
         self.notify.listen()
 
-    def stop(self, worker_name=None):
+    def stop(self, worker_name=None, clean_exit=None):
+        """ Used to stop the worker(s)
+            :param str worker_name: name of the worker to stop
+            :param clean_exit: specify this whether you want to cleanly stop workers,
+                for example workers are supposed to react on SIGINT / SIGTERM
+        """
         if worker_name and len(self.workers) > 1:
             # Kill only the specified worker
             self.remove_market(worker_name)
@@ -183,15 +188,26 @@ class WorkerInfrastructure(threading.Thread):
                 self.config['workers'].pop(worker_name)
 
             self.accounts.remove(account)
-            self.workers[worker_name].cancel_all()
+            if clean_exit:
+                self.workers[worker_name].clean_exit()
+            else:
+                self.workers[worker_name].cancel_all()
             self.workers.pop(worker_name, None)
             self.update_notify()
         else:
             # Kill all of the workers
             for worker in self.workers:
-                self.workers[worker].cancel_all()
+                if clean_exit:
+                    self.workers[worker].clean_exit()
+                else:
+                    self.workers[worker].cancel_all()
             if self.notify:
                 self.notify.websocket.close()
+
+    def clean_exit(self, *args, **kwargs):
+        """ Call this method when you need to cleanly shutdown worker by SIGINT / SIGTERM
+        """
+        self.stop(clean_exit=True, *args, **kwargs)
 
     def remove_worker(self, worker_name=None):
         if worker_name:
