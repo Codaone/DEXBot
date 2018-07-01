@@ -158,7 +158,9 @@ class Strategy(BaseStrategy):
                 new_ladder = self.create_ladder(new_upper_bound, new_lower_bound)
                 new_size = self.compute_size(new_ladder)
                 # but don't bother redoing the orders unless bounds/size have actually moved significantly
-                if abs(new_upper_bound-(self['dynamic_upper_bound'] or 0))/new_upper_bound > WIGGLE/100.0 or abs(new_lower_bound-(self['dynamic_lower_bound'] or 0))/new_lower_bound > WIGGLE/100.0 or abs(new_size-(self['dynamic_size'] or 0))/new_size > WIGGLE/100.0:
+                if (abs(new_upper_bound-(self['dynamic_upper_bound'] or 0))/new_upper_bound > WIGGLE/100.0
+                    or abs(new_lower_bound-(self['dynamic_lower_bound'] or 0))/new_lower_bound > WIGGLE/100.0
+                        or abs(new_size-(self['dynamic_size'] or 0))/new_size > WIGGLE/100.0):
                     self.log.info('dynamic parameters changed, purging orderbook')
                     self.cancel_all()
                     lower_bound = new_lower_bound
@@ -169,7 +171,7 @@ class Strategy(BaseStrategy):
                     self['dynamic_size'] = size
                     ladder = new_ladder
                 else:
-                    # chang etoo small: stick to old values
+                    # change too small: stick to old values
                     lower_bound = self['dynamic_lower_bound']
                     upper_bound = self['dynamic_upper_bound']
                     size = self['dynamic_size']
