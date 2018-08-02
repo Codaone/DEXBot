@@ -74,14 +74,25 @@ class Whiptail:
 
     def showlist(self, control, msg, items, prefix):
         if isinstance(items[0], str):
-            items = [(i, '', 'OFF') for i in items]
+            items = [(tag, '', 'OFF') for tag in items]
         else:
-            items = [(k, prefix + v, s) for k, v, s in items]
+            items = [(tag, prefix + value, state) for tag, value, state in items]
+        extra = self.calc_height(msg) + flatten(items)
+        return shlex.split(self.run(control, msg, extra).value)
+
+    def show_tag_only_list(self, control, msg, items, prefix):
+        if isinstance(items[0], str):
+            items = [(tag, '', 'OFF') for tag in items]
+        else:
+            items = [(tag, '', state) for tag, value, state in items]
         extra = self.calc_height(msg) + flatten(items)
         return shlex.split(self.run(control, msg, extra).value)
 
     def radiolist(self, msg='', items=(), prefix=' - '):
         return self.showlist('radiolist', msg, items, prefix)[0]
+
+    def node_radiolist(self, msg='', items=(), prefix=''):
+        return self.show_tag_only_list('radiolist', msg, items, prefix)[0]
 
     def checklist(self, msg='', items=(), prefix=' - '):
         return self.showlist('checklist', msg, items, prefix)
@@ -151,9 +162,8 @@ class NoWhiptail:
         pass  # Don't tidy the screen
 
 
-def get_whiptail():
+def get_whiptail(title=''):
     if shutil.which("whiptail"):
-        d = Whiptail()
+        return Whiptail(title=title)
     else:
-        d = NoWhiptail()  # Use our own fake whiptail
-    return d
+        return NoWhiptail()  # Use our own fake whiptail

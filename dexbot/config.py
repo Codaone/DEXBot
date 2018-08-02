@@ -35,6 +35,12 @@ class Config(dict):
                 self.create_config(self.default_data, self.config_file)
             self._config = self.load_config(self.config_file)
 
+        # In case there is not a list of nodes in the config file,
+        # the node will be replaced by a list of pre-defined nodes.
+        if isinstance(self._config['node'], str):
+            self._config['node'] = self.node_list
+            self.save_config()
+
     def __setitem__(self, key, value):
         self._config[key] = value
 
@@ -52,7 +58,7 @@ class Config(dict):
 
     @property
     def default_data(self):
-        return {'node': 'wss://status200.bitshares.apasia.tech/ws', 'workers': {}}
+        return {'node': self.node_list, 'workers': {}}
 
     @property
     def workers_data(self):
@@ -158,3 +164,25 @@ class Config(dict):
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)
         return yaml.load(stream, OrderedLoader)
+
+    @property
+    def node_list(self):
+        """ A pre-defined list of Bitshares nodes. """
+        return [
+            "wss://status200.bitshares.apasia.tech/ws",
+            "wss://eu.openledger.info/ws",
+            "wss://bitshares.openledger.info/ws",
+            "wss://dexnode.net/ws",
+            "wss://japan.bitshares.apasia.tech/ws",
+            "wss://bitshares-api.wancloud.io/ws",
+            "wss://openledger.hk/ws",
+            "wss://bitshares.apasia.tech/ws",
+            "wss://bitshares.crypto.fans/ws",
+            "wss://kc-us-dex.xeldal.com/ws",
+            "wss://api.bts.blckchnd.com",
+            "wss://btsza.co.za:8091/ws",
+            "wss://bitshares.dacplay.org/ws",
+            "wss://bit.btsabc.org/ws",
+            "wss://bts.ai.la/ws",
+            "wss://ws.gdex.top"
+        ]

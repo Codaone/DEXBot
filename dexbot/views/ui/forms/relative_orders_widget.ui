@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>416</width>
-    <height>258</height>
+    <width>439</width>
+    <height>291</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,9 +48,9 @@
        <number>9</number>
       </property>
       <item row="0" column="0">
-       <widget class="QLabel" name="amount_label">
+       <widget class="QWidget" name="order_size_wrap" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -67,12 +67,79 @@
           <height>16777215</height>
          </size>
         </property>
-        <property name="text">
-         <string>Amount</string>
-        </property>
-        <property name="buddy">
-         <cstring>amount_input</cstring>
-        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="order_size_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Order size</string>
+           </property>
+           <property name="buddy">
+            <cstring>amount_input</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="order_size_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Fixed order size, expressed in quote asset, unless &quot;relative order size&quot; selected</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item row="0" column="1">
@@ -85,12 +152,15 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>140</width>
+          <width>170</width>
           <height>0</height>
          </size>
         </property>
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="decimals">
          <number>8</number>
@@ -100,10 +170,10 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="center_price_label">
+      <item row="1" column="0">
+       <widget class="QWidget" name="relative_order_size_wrap" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -120,15 +190,169 @@
           <height>16777215</height>
          </size>
         </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="relative_order_size_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Amount is expressed as a percentage of the account balance of quote/base asset</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="relative_order_size_input">
         <property name="text">
-         <string>Center Price</string>
-        </property>
-        <property name="buddy">
-         <cstring>center_price_input</cstring>
+         <string>Relative order size</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="5" column="0">
+       <widget class="QWidget" name="center_price_wrap" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>110</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="center_price_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Center Price</string>
+           </property>
+           <property name="buddy">
+            <cstring>center_price_input</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="center_price_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Fixed center price expressed in base asset: base/quote</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="5" column="1">
        <widget class="QDoubleSpinBox" name="center_price_input">
         <property name="enabled">
          <bool>false</bool>
@@ -141,12 +365,15 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>140</width>
+          <width>170</width>
           <height>0</height>
          </size>
         </property>
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="accelerated">
          <bool>false</bool>
@@ -166,9 +393,9 @@
        </widget>
       </item>
       <item row="7" column="0">
-       <widget class="QLabel" name="spread_label">
+       <widget class="QWidget" name="center_price_dynamic_wrap" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -185,92 +412,173 @@
           <height>16777215</height>
          </size>
         </property>
-        <property name="text">
-         <string>Spread</string>
-        </property>
-        <property name="buddy">
-         <cstring>spread_input</cstring>
-        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="center_price_dynamic_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Always calculate the middle from the closest market orders</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item row="7" column="1">
-       <widget class="QDoubleSpinBox" name="spread_input">
+       <widget class="QCheckBox" name="center_price_dynamic_input">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Update center price from closest market orders</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QWidget" name="balance_offset_wrap" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>151</width>
+          <width>110</width>
           <height>0</height>
          </size>
         </property>
-        <property name="locale">
-         <locale language="English" country="UnitedStates"/>
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>16777215</height>
+         </size>
         </property>
-        <property name="suffix">
-         <string>%</string>
-        </property>
-        <property name="maximum">
-         <double>100000.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>5.000000000000000</double>
-        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="balance_offset_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Automatically adjust orders up or down based on the imbalance of your assets</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item row="5" column="1">
-       <widget class="QCheckBox" name="center_price_dynamic_checkbox">
-        <property name="text">
-         <string>Calculate center price dynamically</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QCheckBox" name="relative_order_size_checkbox">
-        <property name="text">
-         <string>Relative order size</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="QCheckBox" name="center_price_offset_checkbox">
+      <item row="8" column="1">
+       <widget class="QCheckBox" name="center_price_offset_input">
         <property name="text">
          <string>Center price offset based on asset balances</string>
         </property>
        </widget>
       </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="manual_offset_label">
-        <property name="minimumSize">
-         <size>
-          <width>110</width>
-          <height>31</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>110</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Manual center price offset</string>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-        <property name="buddy">
-         <cstring>manual_offset_input</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
+      <item row="10" column="1">
        <widget class="QDoubleSpinBox" name="manual_offset_input">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -280,12 +588,21 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>151</width>
+          <width>170</width>
           <height>0</height>
          </size>
         </property>
         <property name="locale">
          <locale language="English" country="UnitedStates"/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
+        </property>
+        <property name="showGroupSeparator" stdset="0">
+         <bool>false</bool>
         </property>
         <property name="suffix">
          <string>%</string>
@@ -298,6 +615,230 @@
         </property>
        </widget>
       </item>
+      <item row="10" column="0">
+       <widget class="QWidget" name="manual_offset_wrap" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>110</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="manual_offset_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="text">
+            <string>Manual center price offset</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="buddy">
+            <cstring>manual_offset_input</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="manual_offset_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Manually adjust orders up or down. Works independently of other offsets and doesn't override them</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QWidget" name="spread_wrap" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>110</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="spread_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Spread</string>
+           </property>
+           <property name="buddy">
+            <cstring>spread_input</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="spread_tooltip">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>WhatsThisCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>The percentage difference between buy and sell</string>
+           </property>
+           <property name="text">
+            <string>?</string>
+           </property>
+           <property name="margin">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="spread_input">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>170</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="locale">
+         <locale language="English" country="UnitedStates"/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="suffix">
+         <string>%</string>
+        </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>5.000000000000000</double>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -306,7 +847,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>center_price_dynamic_checkbox</sender>
+   <sender>center_price_dynamic_input</sender>
    <signal>clicked(bool)</signal>
    <receiver>center_price_input</receiver>
    <slot>setDisabled(bool)</slot>

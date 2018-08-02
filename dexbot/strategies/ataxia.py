@@ -2,11 +2,7 @@ import math
 from datetime import datetime
 from datetime import timedelta
 
-from bitshares.amount import Amount
-import pudb
-
 from dexbot.basestrategy import BaseStrategy, ConfigElement
-from dexbot.errors import EmptyMarket
 from dexbot.qt_queue.idle_queue import idle_add
 
 
@@ -18,20 +14,20 @@ class Strategy(BaseStrategy):
     def configure(cls):
         return BaseStrategy.configure() + [
             ConfigElement(
-                'size', 'float', 1.0,
-                'The amount of the top order', (0.0, None)),
+                'size', 'float', 1.0, 'Top Order Size',
+                'The amount of the top order', (0.0, None, 4, '')),
             ConfigElement(
-                'spread', 'float', 5.0,
-                'The percentage difference between buy and sell (Spread)', (0.0, None)),
+                'spread', 'float', 5.0, 'Spread',
+                'The percentage difference between buy and sell (Spread)', (0.0, 100.0, 2, '%')),
             ConfigElement(
-                'increment', 'float', 1.0,
-                'The percentage difference between staggered orders (Increment)', (0.5, None)),
+                'increment', 'float', 1.0, 'Increment',
+                'The percentage difference between staggered orders (Increment)', (0.5, 100.0, 2, '%')),
             ConfigElement(
-                'upper_bound', 'float', 1.0,
-                'The top price in the range', (0.0, None)),
+                'upper_bound', 'float', 1.0, 'Upper Bound',
+                'The top price in the range', (0.0, None, 4, '')),
             ConfigElement(
-                'lower_bound', 'float', 1000.0,
-                'The bottom price in the range', (0.0, None))
+                'lower_bound', 'float', 1000.0, 'Lower Bound',
+                'The bottom price in the range', (0.0, None, 4, ''))
         ]
 
     def __init__(self, *args, **kwargs):
@@ -79,7 +75,8 @@ class Strategy(BaseStrategy):
     def check_at_price(self, price):
         """True if no order in self.orderlist at this price"""
         for o in self.orders:
-            if abs(o['price']-price)/price < 0.001:  # "within 0.1% means equal" as slight errors creep in due to rounding
+            # "within 0.1% means equal" as slight errors creep in due to rounding
+            if abs(o['price']-price)/price < 0.001:
                 return False
         return True
 

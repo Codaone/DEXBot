@@ -1,4 +1,5 @@
 import os
+import math
 import shutil
 import errno
 import logging
@@ -32,11 +33,17 @@ def remove(path):
             return
 
 
+def truncate(number, decimals):
+    """ Change the decimal point of a number without rounding
+    """
+    return math.floor(number * 10 ** decimals) / 10 ** decimals
+
+
 def initialize_orders_log():
     """ Creates .csv log file, adds the headers first time only
     """
     data_dir = user_data_dir(APP_NAME, AUTHOR)
-    filename = os.path.join(data_dir, 'orders.csv')
+    filename = os.path.join(data_dir, 'history.csv')
     file = os.path.isfile(filename)
 
     formatter = logging.Formatter('%(message)s')

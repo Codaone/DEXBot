@@ -11,29 +11,29 @@ class Strategy(BaseStrategy):
     """
 
     @classmethod
-    def configure(cls):
-        return BaseStrategy.configure() + [
+    def configure(cls, return_base_config=True):
+        return BaseStrategy.configure(return_base_config) + [
             ConfigElement(
-                'amount', 'float', 1.0,
-                'The amount of buy/sell orders', (0.0, None)),
+                'amount', 'float', 1, 'Amount',
+                'Fixed order size, expressed in quote asset', (0, None, 8, '')),
             ConfigElement(
-                'center_price_dynamic', 'bool', True,
-                'Dynamic centre price', None),
+                'spread', 'float', 6, 'Spread',
+                'The percentage difference between buy and sell', (0, None, 2, '%')),
             ConfigElement(
-                'center_price', 'float', 0.0,
-                'Initial center price', (0, 0, None)),
+                'increment', 'float', 4, 'Increment',
+                'The percentage difference between staggered orders', (0, None, 2, '%')),
             ConfigElement(
-                'spread', 'float', 6.0,
-                'The percentage difference between buy and sell (Spread)', (0.0, None)),
+                'center_price_dynamic', 'bool', True, 'Dynamic center price',
+                'Always calculate the middle from the closest market orders', None),
             ConfigElement(
-                'increment', 'float', 4.0,
-                'The percentage difference between staggered orders (Increment)', (0.0, None)),
+                'center_price', 'float', 0, 'Center price',
+                'Fixed center price expressed in base asset: base/quote', (0, None, 8, '')),
             ConfigElement(
-                'upper_bound', 'float', 1.0,
-                'The top price in the range', (0.0, None)),
+                'lower_bound', 'float', 1, 'Lower bound',
+                'The bottom price in the range', (0, None, 8, '')),
             ConfigElement(
-                'lower_bound', 'float', 1000.0,
-                'The bottom price in the range', (0.0, None))
+                'upper_bound', 'float', 1000000, 'Upper bound',
+                'The top price in the range', (0, None, 8, ''))
         ]
 
     def __init__(self, *args, **kwargs):
@@ -265,14 +265,16 @@ class Strategy(BaseStrategy):
         return [buy_orders, sell_orders]
 
     @staticmethod
-    def get_required_assets(market, amount, spread, increment, lower_bound, upper_bound):
+    def get_required_assets(market, amount, spread, increment, center_price, lower_bound, upper_bound):
         if not amount or not lower_bound or not increment:
             return None
 
         ticker = market.ticker()
         highest_bid = ticker.get("highestBid")
         lowest_ask = ticker.get("lowestAsk")
-        if not float(highest_bid):
+        if center_price:
+            pass
+        elif not float(highest_bid):
             return None
         elif not float(lowest_ask):
             return None

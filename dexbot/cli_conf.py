@@ -1,7 +1,7 @@
 """
 A module to provide an interactive text-based tool for dexbot configuration
 The result is dexbot can be run without having to hand-edit config files.
-If systemd is detected it will offer to install a user service unit (under ~/.local/share/systemd
+If systemd is detected it will offer to install a user service unit (under ~/.local/share/systemd)
 This requires a per-user systemd process to be running
 
 Requires the 'whiptail' tool for text-based configuration (so UNIX only)
@@ -26,8 +26,6 @@ import bitshares.exceptions
 
 from dexbot.whiptail import get_whiptail
 from dexbot.basestrategy import BaseStrategy
-
-from bitshares import BitShares
 
 # FIXME: auto-discovery of strategies would be cool but can't figure out a way
 STRATEGIES = [
@@ -66,26 +64,31 @@ def select_choice(current, choices):
             for tag, text in choices]
 
 
-def process_config_element(elem, d, config):
+def process_config_element(elem, whiptail, config):
     """ Process an item of configuration metadata display a widget as appropriate
         d: the Dialog object
         config: the config dictionary for this worker
     """
+    if elem.description:
+        title = '{} - {}'.format(elem.title, elem.description)
+    else:
+        title = elem.title
+
     if elem.type == "string":
-        txt = d.prompt(elem.description, config.get(elem.key, elem.default))
+        txt = whiptail.prompt(title, config.get(elem.key, elem.default))
         if elem.extra:
             while not re.match(elem.extra, txt):
-                d.alert("The value is not valid")
-                txt = d.prompt(
-                    elem.description, config.get(
+                whiptail.alert("The value is not valid")
+                txt = whiptail.prompt(
+                    title, config.get(
                         elem.key, elem.default))
         config[elem.key] = txt
     if elem.type == "bool":
         value = config.get(elem.key, elem.default)
         value = 'yes' if value else 'no'
-        config[elem.key] = d.confirm(elem.description, value)
+        config[elem.key] = whiptail.confirm(title, value)
     if elem.type in ("float", "int"):
-        txt = d.prompt(elem.description, str(config.get(elem.key, elem.default)))
+        txt = whiptail.prompt(title, str(config.get(elem.key, elem.default)))
         while True:
             try:
                 if elem.type == "int":
@@ -93,17 +96,17 @@ def process_config_element(elem, d, config):
                 else:
                     val = float(txt)
                 if val < elem.extra[0]:
-                    d.alert("The value is too low")
+                    whiptail.alert("The value is too low")
                 elif elem.extra[1] and val > elem.extra[1]:
-                    d.alert("the value is too high")
+                    whiptail.alert("the value is too high")
                 else:
                     break
             except ValueError:
-                d.alert("Not a valid value")
-            txt = d.prompt(elem.description, str(config.get(elem.key, elem.default)))
+                whiptail.alert("Not a valid value")
+            txt = whiptail.prompt(title, str(config.get(elem.key, elem.default)))
         config[elem.key] = val
     if elem.type == "choice":
-        config[elem.key] = d.radiolist(elem.description, select_choice(
+        config[elem.key] = whiptail.radiolist(title, select_choice(
             config.get(elem.key, elem.default), elem.extra))
 
 
@@ -158,19 +161,19 @@ def setup_systemd(d, config, shell):
         config['systemd_status'] = 'reject'
 
 
-def configure_worker(d, worker):
+def configure_worker(whiptail, worker):
     default_strategy = worker.get('module', 'dexbot.strategies.relative_orders')
     for i in STRATEGIES:
         if default_strategy == i['class']:
             default_strategy = i['tag']
 
-    worker['module'] = d.radiolist(
+    worker['module'] = whiptail.radiolist(
         "Choose a worker strategy", select_choice(
             default_strategy, [(i['tag'], i['name']) for i in STRATEGIES]))
     for i in STRATEGIES:
         if i['tag'] == worker['module']:
             worker['module'] = i['class']
-    # Import the worker class but we don't __init__ it here
+    # Import the strategy class but we don't __init__ it here
     strategy_class = getattr(
         importlib.import_module(worker["module"]),
         'Strategy'
@@ -179,10 +182,11 @@ def configure_worker(d, worker):
     configs = strategy_class.configure()
     if configs:
         for c in configs:
-            process_config_element(c, d, worker)
+            process_config_element(c, whiptail, worker)
     else:
-        d.alert("This worker type does not have configuration information. "
-                "You will have to check the worker code and add configuration values to config.yml if required")
+        whiptail.alert(
+            "This worker type does not have configuration information. "
+            "You will have to check the worker code and add configuration values to config.yml if required")
     return worker
 
 
@@ -223,9 +227,8 @@ def unlock_wallet(d, bitshares_instance):
                     sys.exit(1)
 
 
-def configure_dexbot(config, shell=False):
-    global bitshares_instance
-    d = get_whiptail()
+def configure_dexbot(config, ctx):
+    whiptail = get_whiptail('DEXBot configure')
     workers = config.get('workers', {})
     if len(workers) == 0:
         d.view_text("""Welcome to the DEXBot text-based configuration.
@@ -236,70 +239,44 @@ screens, the mouse does not work. Selecting Cancel will exit
 the program.
 """)
         while True:
-            txt = d.prompt("Your name for the worker")
-            config['workers'] = {txt: configure_worker(d, {})}
-            if not d.confirm("Set up another worker?\n(DEXBot can run multiple workers in one instance)"):
+            txt = whiptail.prompt("Your name for the worker")
+            config['workers'] = {txt: configure_worker(whiptail, {})}
+            if not whiptail.confirm("Set up another worker?\n(DEXBot can run multiple workers in one instance)"):
                 break
-        setup_systemd(d, config, shell)
+        setup_systemd(whiptail, config)
     else:
-        menu = [('NEW', 'Create a new bot'),
-                ('DEL', 'Delete a bot'),
-                ('EDIT', 'Edit a bot'),
-                ('REPORT', 'Configure reporting'),
-                ('NODE', 'Set the BitShares node'),
-                ('KEY', 'Add a private key'),
-                ('WIPE', 'Wipe all private keys')]
-        if shell:
-            menu.extend([('PASSWD', 'Set the account password'),
-                         ('LOGOUT', 'Logout of the server')])
-        else:
-            menu.append(('QUIT', 'Quit without saving'))
-        action = d.menu("You have an existing configuration.\nSelect an action:", menu)
+        bitshares_instance = ctx.bitshares
+        action = whiptail.menu(
+            "You have an existing configuration.\nSelect an action:",
+            [('NEW', 'Create a new worker'),
+             ('DEL', 'Delete a worker'),
+             ('EDIT', 'Edit a worker'),
+             ('CONF', 'Redo general config')])
+
         if action == 'EDIT':
-            worker_name = d.menu("Select worker to edit", [(i, i) for i in workers])
-            config['workers'][worker_name] = configure_worker(d, config['workers'][worker_name])
-            bitshares_instance = BitShares(config['node'])
+            worker_name = whiptail.menu("Select worker to edit", [(i, i) for i in workers])
+            config['workers'][worker_name] = configure_worker(whiptail, config['workers'][worker_name])
+
             strategy = BaseStrategy(worker_name, bitshares_instance=bitshares_instance)
             strategy.purge()
         elif action == 'DEL':
-            worker_name = d.menu("Select worker to delete", [(i, i) for i in workers])
+            worker_name = whiptail.menu("Select worker to delete", [(i, i) for i in workers])
             del config['workers'][worker_name]
-            bitshares_instance = BitShares(config['node'])
+
             strategy = BaseStrategy(worker_name, bitshares_instance=bitshares_instance)
             strategy.purge()
         elif action == 'NEW':
-            txt = d.prompt("Your name for the new worker")
-            config['workers'][txt] = configure_worker(d, {})
-        elif action == 'REPORT':
-            setup_reporter(d, config)
-        elif action == 'NODE':
-            config['node'] = d.prompt(
-                "BitShares node to use",
-                default=config['node'])
-        elif action == 'LOGOUT':
-            sys.exit()
-        elif action == 'PASSWD':
-            os.system("passwd")
-        elif action == 'KEY':
-            if not bitshares_instance:
-                bitshares_instance = BitShares()
-            if bitshares_instance.wallet.created():
-                unlock_wallet(d, bitshares_instance)
-            else:
-                bitshares_instance.wallet.create(d.prompt("Enter password for new wallet", password=True))
-            bitshares_instance.wallet.addPrivateKey(d.prompt("New private key in WIF format (begins with a \"5\")"))
-        elif action == 'WIPE':
-            if not bitshares_instance:
-                bitshares_instance = BitShares()
-            if bitshares_instance.wallet.created():
-                if d.confirm("Really wipe your wallet of keys?", default='no'):
-                    unlock_wallet(d, bitshares_instance)
-                    bitshares_instance.wallet.wipe(True)
-            else:
-                d.alert("No wallet to wipe")
-        elif action == 'QUIT':
-            pass
-        else:
-            d.prompt("Unknown command {}".format(action))
-    d.clear()
+            txt = whiptail.prompt("Your name for the new worker")
+            config['workers'][txt] = configure_worker(whiptail, {})
+        elif action == 'CONF':
+            choice = whiptail.node_radiolist(
+                msg="Choose node",
+                items=select_choice(config['node'][0], [(i, i) for i in config['node']])
+            )
+            # Move selected node as first item in the config file's node list
+            config['node'].remove(choice)
+            config['node'].insert(0, choice)
+
+            setup_systemd(whiptail, config)
+    whiptail.clear()
     return config

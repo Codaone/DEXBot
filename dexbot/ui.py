@@ -85,6 +85,7 @@ def chain(f):
     def new_func(ctx, *args, **kwargs):
         ctx.bitshares = BitShares(
             ctx.config["node"],
+            num_retries=-1,
             **ctx.obj
         )
         set_shared_bitshares_instance(ctx.bitshares)

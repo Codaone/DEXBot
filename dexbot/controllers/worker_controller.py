@@ -35,12 +35,11 @@ class WorkerController:
         }
         return strategies
 
-    @staticmethod
-    def get_strategies():
-        """ Static method for getting the strategies
+    @classmethod
+    def get_strategies(cls):
+        """ Class method for getting the strategies
         """
-        controller = WorkerController(None, None, None)
-        return controller.strategies
+        return cls(None, None, None).strategies
 
     @property
     def base_assets(self):
@@ -157,7 +156,7 @@ class WorkerController:
 
         # Resize the dialog to be minimum possible height
         width = self.view.geometry().width()
-        self.view.setMinimumSize(width, 0)
+        self.view.setMinimumHeight(0)
         self.view.resize(width, 1)
 
     def validate_worker_name(self, worker_name, old_worker_name=None):

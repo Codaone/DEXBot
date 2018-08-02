@@ -254,9 +254,8 @@ class WorkerInfrastructure(threading.Thread):
                 self.markets.remove(market)
 
     @staticmethod
-    def remove_offline_worker(config, worker_name):
+    def remove_offline_worker(config, worker_name, bitshares_instance):
         # Initialize the base strategy to get control over the data
-        bitshares_instance = BitShares(config['node'])
         strategy = BaseStrategy(worker_name, config, bitshares_instance=bitshares_instance)
         strategy.purge()
 

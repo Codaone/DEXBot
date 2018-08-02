@@ -3,11 +3,9 @@ import re
 from .ui.worker_item_widget_ui import Ui_widget
 from .confirmation import ConfirmationDialog
 from .edit_worker import EditWorkerView
-from .errors import gui_error
 from dexbot.storage import db_worker
 from dexbot.controllers.worker_controller import WorkerController
 from dexbot.views.errors import gui_error
-from dexbot.resources import icons_rc
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -141,7 +139,10 @@ class WorkerItemWidget(QtWidgets.QWidget, Ui_widget):
             self.remove_widget()
 
     def remove_widget(self):
+        account = self.worker_config['workers'][self.worker_name]['account']
+
         self.main_ctrl.remove_worker(self.worker_name)
+        self.main_ctrl.bitshares_instance.wallet.removeAccount(account)
         self.view.remove_worker_widget(self.worker_name)
         self.main_ctrl.config.remove_worker_config(self.worker_name)
         self.deleteLater()

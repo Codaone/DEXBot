@@ -7,6 +7,7 @@ import math
 from .storage import Storage
 from .statemachine import StateMachine
 from .config import Config
+from .helper import truncate
 
 from events import Events
 import bitsharesapi
@@ -21,18 +22,20 @@ from .storage import Storage
 from .statemachine import StateMachine
 from . import graph
 
+MAX_TRIES = 3
 
-ConfigElement = collections.namedtuple('ConfigElement', 'key type default description extra')
-# Bots need to specify their own configuration values
-# I want this to be UI-agnostic so a future web or GUI interface can use it too
-# so each bot can have a class method 'configure' which returns a list of ConfigElement
-# named tuples. Tuple fields as follows.
-# Key: the key in the bot config dictionary that gets saved back to config.yml
-# Type: one of "int", "float", "bool", "string", "choice"
-# Default: the default value. must be right type.
-# Description: comments to user, full sentences encouraged
-# Extra:
-#       For int & float: a (min, max) tuple
+ConfigElement = collections.namedtuple('ConfigElement', 'key type default title description extra')
+# Strategies need to specify their own configuration values, so each strategy can have
+# a class method 'configure' which returns a list of ConfigElement named tuples.
+# Tuple fields as follows:
+# - Key: the key in the bot config dictionary that gets saved back to config.yml
+# - Type: one of "int", "float", "bool", "string", "choice"
+# - Default: the default value. must be right type.
+# - Title: name shown to the user, preferably not too long
+# - Description: comments to user, full sentences encouraged
+# - Extra:
+#       For int: a (min, max, suffix) tuple
+#       For float: a (min, max, precision, suffix) tuple
 #       For string: a regular expression, entries must match it, can be None which equivalent to .*
 #       For bool, ignored
 #       For choice: a list of choices, choices are in turn (tag, label) tuples.
@@ -65,7 +68,7 @@ class BaseStrategy(Storage, StateMachine, Events):
          * ``basestrategy.log``: a per-worker logger (actually LoggerAdapter) adds worker-specific context:
             worker name & account (Because some UIs might want to display per-worker logs)
 
-        Also, Base Strategy inherits :class:`dexbot.storage.Storage`
+        Also, BaseStrategy inherits :class:`dexbot.storage.Storage`
         which allows to permanently store data in a sqlite database
         using:
 
@@ -73,9 +76,9 @@ class BaseStrategy(Storage, StateMachine, Events):
 
         .. note:: This applies a ``json.loads(json.dumps(value))``!
 
-    Workers must never attempt to interact with the user, they must assume they are running unattended
-    They can log events. If a problem occurs they can't fix they should set self.disabled = True and throw an exception
-    The framework catches all exceptions thrown from event handlers and logs appropriately.
+        Workers must never attempt to interact with the user, they must assume they are running unattended.
+        They can log events. If a problem occurs they can't fix they should set self.disabled = True and
+        throw an exception. The framework catches all exceptions thrown from event handlers and logs appropriately.
     """
 
     __events__ = [
@@ -91,7 +94,7 @@ class BaseStrategy(Storage, StateMachine, Events):
     ]
 
     @classmethod
-    def configure(cls):
+    def configure(cls, return_base_config=True):
         """
         Return a list of ConfigElement objects defining the configuration values for
         this class
@@ -101,13 +104,16 @@ class BaseStrategy(Storage, StateMachine, Events):
         NOTE: when overriding you almost certainly will want to call the ancestor
         and then add your config values to the list.
         """
-        # these configs are common to all workers
-        return [
-            ConfigElement("account", "string", "", "BitShares account name for the bot to operate with", ""),
-            ConfigElement("market", "string", "USD:BTS",
+        # These configs are common to all bots
+        base_config = [
+            ConfigElement("account", "string", "", "Account", "BitShares account name for the bot to operate with", ""),
+            ConfigElement("market", "string", "USD:BTS", "Market",
                           "BitShares market to operate on, in the format ASSET:OTHERASSET, for example \"USD:BTS\"",
-                          "[A-Z]+[:\/][A-Z]+")
+                          r"[A-Z\.]+[:\/][A-Z\.]+")
         ]
+        if return_base_config:
+            return base_config
+        return []
 
     def __init__(
         self,
@@ -428,7 +434,7 @@ class BaseStrategy(Storage, StateMachine, Events):
     def market_buy(self, amount, price, return_none=False, *args, **kwargs):
         symbol = self.market['base']['symbol']
         precision = self.market['base']['precision']
-        base_amount = self.truncate(price * amount, precision)
+        base_amount = truncate(price * amount, precision)
 
         # Make sure we have enough balance for the order
         if self.balance(self.market['base']) < base_amount:
@@ -466,7 +472,7 @@ class BaseStrategy(Storage, StateMachine, Events):
     def market_sell(self, amount, price, return_none=False, *args, **kwargs):
         symbol = self.market['quote']['symbol']
         precision = self.market['quote']['precision']
-        quote_amount = self.truncate(amount, precision)
+        quote_amount = truncate(amount, precision)
 
         # Make sure we have enough balance for the order
         if self.balance(self.market['quote']) < quote_amount:
@@ -519,8 +525,8 @@ class BaseStrategy(Storage, StateMachine, Events):
     def purge(self):
         """ Clear all the worker data from the database and cancel all orders
         """
-        self.cancel_all()
         self.clear_orders()
+        self.cancel_all()
         self.clear()
 
     def graph(self, start, end_=None):
@@ -636,12 +642,6 @@ class BaseStrategy(Storage, StateMachine, Events):
                         time.sleep(6)  # Wait at least a BitShares block
                 else:
                     raise
-
-    @staticmethod
-    def truncate(number, decimals):
-        """ Change the decimal point of a number without rounding
-        """
-        return math.floor(number * 10 ** decimals) / 10 ** decimals
 
     def write_order_log(self, worker_name, order):
         operation_type = 'TRADE'

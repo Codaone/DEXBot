@@ -2,16 +2,14 @@ from dexbot.basestrategy import BaseStrategy
 
 
 class Strategy(BaseStrategy):
-    """
-    Echo strategy
-    Strategy that logs all events within the blockchain
+    """ Echo strategy
+        Strategy that logs all events within the blockchain
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        """ set call backs for events
-        """
+        # Set call backs for events
         self.onOrderMatched += self.print_orderMatched
         self.onOrderPlaced += self.print_orderPlaced
         self.onUpdateCallOrder += self.print_UpdateCallOrder
@@ -36,7 +34,7 @@ class Strategy(BaseStrategy):
 
             :param bitshares.price.FilledOrder i: Filled order details
         """
-        self.log.info("order matched: %s" % i)
+        self.log.info("Order matched: {}".format(i))
 
     def print_orderPlaced(self, i):
         """ Is called when a new order in the market is placed
@@ -46,7 +44,7 @@ class Strategy(BaseStrategy):
 
             :param bitshares.price.Order i: Order details
         """
-        self.log.info("order placed:  %s" % i)
+        self.log.info("Order placed: {}".format(i))
 
     def print_UpdateCallOrder(self, i):
         """ Is called when a call order for a market pegged asset is updated
@@ -56,7 +54,7 @@ class Strategy(BaseStrategy):
 
             :param bitshares.price.CallOrder i: Call order details
         """
-        self.log.info("call update:   %s" % i)
+        self.log.info("Call update: {}".format(i))
 
     def print_marketUpdate(self, i):
         """ Is called when Something happens in your market.
@@ -67,7 +65,7 @@ class Strategy(BaseStrategy):
 
             :param object i: Can be instance of ``FilledOrder``, ``Order``, or ``CallOrder``
         """
-        self.log.info("marketupdate:  %s" % i)
+        self.log.info("Market update: {}".format(i))
 
     def print_newBlock(self, i):
         """ Is called when a block is received
@@ -79,12 +77,11 @@ class Strategy(BaseStrategy):
                       need to know the most recent block number, you
                       need to use ``bitshares.blockchain.Blockchain``
         """
-        self.log.info("new1 block:     %s" % i)
-        # raise ValueError("Testing disabling")
+        self.log.info("New block: {}".format(i))
 
     def print_accountUpdate(self, i):
         """ This method is called when the worker's account name receives
             any update. This includes anything that changes
             ``2.6.xxxx``, e.g., any operation that affects your account.
         """
-        self.log.info("account:       %s" % i)
+        self.log.info("Account: {}".format(i))
