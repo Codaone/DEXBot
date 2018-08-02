@@ -67,8 +67,13 @@ class Strategy(BaseStrategy):
         self["feed_price"] = float(price)
 
         # Buy Side
-        if float(self.balance(self.market["base"])) < buy_price * target["amount"]["buy"]:
-            InsufficientFundsError(Amount(target["amount"]["buy"] * float(buy_price), self.market["base"]))
+        if float(self.balance(self.market["base"])
+                 ) < buy_price * target["amount"]["buy"]:
+            InsufficientFundsError(
+                Amount(
+                    target["amount"]["buy"] *
+                    float(buy_price),
+                    self.market["base"]))
             self["insufficient_buy"] = True
         else:
             self["insufficient_buy"] = False
@@ -79,8 +84,12 @@ class Strategy(BaseStrategy):
             )
 
         # Sell Side
-        if float(self.balance(self.market["quote"])) < target["amount"]["sell"]:
-            InsufficientFundsError(Amount(target["amount"]["sell"], self.market["quote"]))
+        if float(self.balance(self.market["quote"])
+                 ) < target["amount"]["sell"]:
+            InsufficientFundsError(
+                Amount(
+                    target["amount"]["sell"],
+                    self.market["quote"]))
             self["insufficient_sell"] = True
         else:
             self["insufficient_sell"] = False
@@ -98,10 +107,12 @@ class Strategy(BaseStrategy):
         """
         target = self.worker.get("target", {})
         if target.get("reference") == "feed":
-            assert self.market == self.market.core_quote_market(), "Wrong market for 'feed' reference!"
+            assert self.market == self.market.core_quote_market(
+            ), "Wrong market for 'feed' reference!"
             ticker = self.market.ticker()
             price = ticker.get("quoteSettlement_price")
-            assert abs(price["price"]) != float("inf"), "Check price feed of asset! (%s)" % str(price)
+            assert abs(price["price"]) != float(
+                "inf"), "Check price feed of asset! (%s)" % str(price)
         return price
 
     def tick(self, d):
@@ -133,5 +144,6 @@ class Strategy(BaseStrategy):
             self["feed_price"] and
             fabs(1 - float(self.getprice()) / self["feed_price"]) > self.worker["threshold"] / 100.0
         ):
-            self.log.info("Price feed moved by more than the threshold. Updating orders!")
+            self.log.info(
+                "Price feed moved by more than the threshold. Updating orders!")
             self.updateorders()

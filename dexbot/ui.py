@@ -15,41 +15,44 @@ log = logging.getLogger(__name__)
 def verbose(f):
     @click.pass_context
     def new_func(ctx, *args, **kwargs):
+        global formatter1, formatter2
         verbosity = [
             "critical", "error", "warn", "info", "debug"
         ][int(min(ctx.obj.get("verbose", 0), 4))]
         if ctx.obj.get("systemd", False):
-            # Don't print the timestamps: systemd will log it for us
-            formatter1 = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+            # dont print the timestamps: systemd will log it for us
+            formatter1 = logging.Formatter(
+                '%(name)s - %(levelname)s - %(message)s')
             formatter2 = logging.Formatter(
-                '%(worker_name)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
+                'bot %(botname)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
         elif verbosity == "debug":
-            # When debugging: log where the log call came from
-            formatter1 = logging.Formatter('%(asctime)s (%(module)s:%(lineno)d) - %(levelname)s - %(message)s')
+            # when debugging log where the log call came from
+            formatter1 = logging.Formatter(
+                '%(asctime)s (%(module)s:%(lineno)d) - %(levelname)s - %(message)s')
             formatter2 = logging.Formatter(
-                '%(asctime)s (%(module)s:%(lineno)d) - %(worker_name)s - %(levelname)s - %(message)s')
+                '%(asctime)s (%(module)s:%(lineno)d) - bot %(botname)s - %(levelname)s - %(message)s')
         else:
-            formatter1 = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            formatter1 = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             formatter2 = logging.Formatter(
                 '%(asctime)s - %(worker_name)s using account %(account)s on %(market)s - %(levelname)s - %(message)s')
 
         # Use special format for special workers logger
         logger = logging.getLogger("dexbot.per_worker")
-        logger.setLevel(getattr(logging, verbosity.upper()))
+        level = getattr(logging, verbosity.upper())
+        logger.setLevel(level)
         ch = logging.StreamHandler()
         ch.setFormatter(formatter2)
-        logger.addHandler(ch)
-
-        # Logging to a file
-        fh = logging.FileHandler('dexbot.log')
-        fh.setFormatter(formatter2)
-        logger.addHandler(fh)
-
-        logger.propagate = False  # Don't double up with root logger
-        # Set the root logger with basic format
+        logging.getLogger("dexbot.per_bot").addHandler(ch)
+        logging.getLogger("dexbot.per_bot").setLevel(level)
+        # don't double up with root logger
+        logging.getLogger("dexbot.per_bot").propagate = False
+        # set the root logger with basic format
         ch = logging.StreamHandler()
         ch.setFormatter(formatter1)
+        logging.getLogger("dexbot").setLevel(level)
         logging.getLogger("dexbot").addHandler(ch)
+        # and don't double up on the root logger
         logging.getLogger("").handlers = []
 
         # GrapheneAPI logging
@@ -57,18 +60,22 @@ def verbose(f):
             verbosity = [
                 "critical", "error", "warn", "info", "debug"
             ][int(min(ctx.obj.get("verbose", 4) - 4, 4))]
-            logger = logging.getLogger("grapheneapi")
-            logger.setLevel(getattr(logging, verbosity.upper()))
-            logger.addHandler(ch)
+            log = logging.getLogger("grapheneapi")
+            log.setLevel(getattr(logging, verbosity.upper()))
+            log.addHandler(ch)
 
         if ctx.obj["verbose"] > 8:
             verbosity = [
                 "critical", "error", "warn", "info", "debug"
             ][int(min(ctx.obj.get("verbose", 8) - 8, 4))]
-            logger = logging.getLogger("graphenebase")
-            logger.setLevel(getattr(logging, verbosity.upper()))
-            logger.addHandler(ch)
-
+            log = logging.getLogger("graphenebase")
+            log.setLevel(getattr(logging, verbosity.upper()))
+            log.addHandler(ch)
+        # has the user set logging in the config
+        if "logging" in ctx.config:
+            # this is defined in
+            # https://docs.python.org/3.4/library/logging.config.html#logging-config-dictschema
+            logging.config.dictConfig(ctx.config['logging'])
         return ctx.invoke(f, *args, **kwargs)
     return update_wrapper(new_func, f)
 

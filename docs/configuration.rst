@@ -44,13 +44,17 @@ The configuration consists of a series of questions about the bots you wish to c
    DEXBot uses ``wss://status200.bitshares.apasia.tech/ws`` as its default node
    If you run your own witness node then you can edit ``config.yml`` to change the node value.
 
-5. Systemd.
+5. Reporting
 
-   If the configuration tool detects systemd (the process control system on most modern systems) it will offer to install dexbot
+   DEXBot can send regular reports via e-mail of its activities. See :doc:`reports`
+   
+6. Systemd.
+
+   If the configuration tool detects systemd (the process control system on most modern Linux systems) it will offer to install dexbot
    as a background service, this will run continuously in the background whenever you are logged in. if you enabled lingering
-   as described, it wil run whenever the computer is turned on.
+   as described, it will run whenever the computer is turned on.
 
-6. The Passphrase
+7. The Passphrase
 
    If you select yes above, the final question will be the password you entered to protect the private key with ``uptick``.
    Entering it here is a security risk: the configuration tool will save the password to a file on the computer. This
@@ -68,5 +72,5 @@ If you are not using systemd, the bot can be run manually by::
 
     dexbot run
 
-It will ask for your wallet passphrase (that you have provide when
-adding your private key to pybitshares using ``uptick addkey``).
+It will ask for your wallet passphrase (that you provided when
+adding your private key using ``uptick addkey``).

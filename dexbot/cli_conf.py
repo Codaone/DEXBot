@@ -21,6 +21,9 @@ import sys
 import re
 import subprocess
 
+from bitshares import BitShares
+import bitshares.exceptions
+
 from dexbot.whiptail import get_whiptail
 from dexbot.basestrategy import BaseStrategy
 
@@ -38,7 +41,7 @@ SYSTEMD_SERVICE_NAME = os.path.expanduser(
 
 SYSTEMD_SERVICE_FILE = """
 [Unit]
-Description=Dexbot
+Description=DEXBot
 
 [Service]
 Type=notify
@@ -51,6 +54,8 @@ Environment=UNLOCK={passwd}
 [Install]
 WantedBy=default.target
 """
+
+bitshares_instance = None
 
 
 def select_choice(current, choices):
@@ -116,42 +121,44 @@ def dexbot_service_running():
     return False
 
 
-def setup_systemd(whiptail, config):
+def setup_systemd(d, config, shell):
     if not os.path.exists("/etc/systemd"):
         return  # No working systemd
 
-    if not whiptail.confirm(
-            "Do you want to run dexbot as a background (daemon) process?"):
-        config['systemd_status'] = 'disabled'
-        return
+    # if shell systemd is automatic
+    if shell or d.confirm(
+            "Do you want to install dexbot as a background (daemon) process?"):
 
-    redo_setup = False
-    if os.path.exists(SYSTEMD_SERVICE_NAME):
-        redo_setup = whiptail.confirm('Redo systemd setup?', 'no')
+        if not os.path.exists(SYSTEMD_SERVICE_NAME):
+            path = '~/.local/share/systemd/user'
+            path = os.path.expanduser(path)
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+            password = d.prompt(
+                "The wallet password\n"
+                "NOTE: this will be saved on disc so the worker can run unattended. "
+                "This means anyone with access to this computer's files can spend all your money",
+                password=True)
 
-    if not os.path.exists(SYSTEMD_SERVICE_NAME) or redo_setup:
-        path = '~/.local/share/systemd/user'
-        path = os.path.expanduser(path)
-        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-        password = whiptail.prompt(
-            "The wallet password\n"
-            "NOTE: this will be saved on disc so the worker can run unattended. "
-            "This means anyone with access to this computer's files can spend all your money",
-            password=True)
-
-        # Because we hold password be restrictive
-        fd = os.open(SYSTEMD_SERVICE_NAME, os.O_WRONLY | os.O_CREAT, 0o600)
-        with open(fd, "w") as fp:
-            fp.write(
-                SYSTEMD_SERVICE_FILE.format(
-                    exe=sys.argv[0],
-                    passwd=password,
-                    homedir=os.path.expanduser("~")))
-        # The dexbot service file was edited, reload the daemon configs
-        os.system('systemctl --user daemon-reload')
-
-    # Signal cli.py to set the unit up after writing config file
-    config['systemd_status'] = 'enabled'
+            # Because we hold password be restrictive
+            fd = os.open(SYSTEMD_SERVICE_NAME, os.O_WRONLY | os.O_CREAT, 0o600)
+            exe = sys.argv[0]
+            if exe.endswith('-shell'):
+                exe = exe[:-6]+'-cli'
+            with open(fd, "w") as fp:
+                fp.write(
+                    SYSTEMD_SERVICE_FILE.format(
+                        exe=exe,
+                        passwd=passwd,
+                        homedir=os.path.expanduser("~")))
+            # signal cli.py to set the unit up after writing config file
+            config['systemd_status'] = 'install'
+            # actually set up the wallet if required
+            if not bitshares_instance:
+                bitshares_instance = BitShares()
+            if not bitshares_instance.wallet.created():
+                bitshares_instance.wallet.create(passwd)
+    else:
+        config['systemd_status'] = 'reject'
 
 
 def configure_worker(whiptail, worker):
@@ -183,10 +190,54 @@ def configure_worker(whiptail, worker):
     return worker
 
 
+def setup_reporter(d, config):
+    reporter_configs = config.get('reports', [])
+    while True:
+        action = d.menu("DEXBot can report its actions in various ways.", [
+            ("EMAIL", "Sending e-mails at regular intervals"),
+            ("JABBER", "Using the Jabber (XMPP) chat system"),
+            ("QUIT", "Exit this menu")])
+        if action == "QUIT":
+            break
+        elif action == "EMAIL":
+            report_module = 'dexbot.report.mail'
+        elif action == "JABBER":
+            report_module = 'dexbot.report.jabber'
+        mod = importlib.import_module(report_module)
+        this_reporter_config = None
+        for i in reporter_configs:
+            if i['module'] == report_module:
+                this_reporter_config = i
+        if not this_reporter_config:
+            this_reporter_config = {'module': report_module}
+            reporter_configs.append(this_reporter_config)
+        for element in mod.Reporter.configure():
+            process_config_element(element, d, this_reporter_config)
+    config['reports'] = reporter_configs
+
+
+def unlock_wallet(d, bitshares_instance):
+    if not bitshares_instance.wallet.unlocked():
+        while True:
+            try:
+                bitshares_instance.wallet.unlock(d.prompt("Enter wallet password", password=True))
+                return
+            except bitshares.exceptions.WrongMasterPasswordException:
+                if not d.confirm("Password wrong, do you want to try again?"):
+                    sys.exit(1)
+
+
 def configure_dexbot(config, ctx):
     whiptail = get_whiptail('DEXBot configure')
     workers = config.get('workers', {})
-    if not workers:
+    if len(workers) == 0:
+        d.view_text("""Welcome to the DEXBot text-based configuration.
+You will be asked to set up at least one bot, this will then run
+in the background.
+You can use the arrow keys and RETURN to select buttons in these
+screens, the mouse does not work. Selecting Cancel will exit
+the program.
+""")
         while True:
             txt = whiptail.prompt("Your name for the worker")
             config['workers'] = {txt: configure_worker(whiptail, {})}

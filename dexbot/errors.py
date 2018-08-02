@@ -2,11 +2,17 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def InsufficientFundsError(amount):
-    log.error(
-        "[InsufficientFunds] Need {}".format(str(amount))
-    )
+class DEXBotError(Exception):
+    pass
 
 
-class NoWorkersAvailable(Exception):
+class InsufficientFundsError(DEXBotError):
+    pass
+
+
+class NoWorkersAvailable(DEXBotError):
+    pass
+
+
+class EmptyMarket(DEXBotError):
     pass

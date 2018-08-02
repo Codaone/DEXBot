@@ -7,7 +7,7 @@ Requirements -- Linux
 
 To run in the background you need systemd and *lingering* enabled::
 
-   sudo loginctl enable-linger $USER
+  sudo loginctl enable-linger $USER
 
 On some systems, such as the Raspberry Pi, you need to reboot for this to take effect.
 
@@ -16,20 +16,40 @@ the OpenSSL libraries.
 
 Plus for the easy configuration you need the ``whiptail`` command.
 
-On Ubuntu::
+On Ubuntu/Debian/Raspian
+========================
 
-   sudo add-apt-repository universe
-   sudo apt-get update
-   sudo apt-get install libssl-dev python3-pip python3-dev whiptail
+Do::
 
-On Debian/Raspian::
+  sudo apt-get update
+  sudo apt-get install -y gcc libssl-dev python3-pip python3-dev whiptail inetutils-ping
 
-   sudo apt-get install libssl-dev python3-pip python3-dev whiptail
+On some Ubuntu systems, it will complain about missing packages: you first need to make sure you have
+the ``universe`` repository::
 
-On CentOS/RedHat::
+ sudo apt-get install -y software-properties-common
+ sudo add-apt-repository universe
 
-   sudo yum install -y epel-release
-   sudo yum install openssl-devel python34-pip python34-devel newt
+NOTE: you *don't* need to upgrade the system: the issue here is about the *range* of packages
+available, not how new/old they are.
+
+Fedora
+======
+
+This has been tested on Fedora 27::
+
+ sudo yum install -y gcc openssl-devel python3-pip python3-devel newt
+
+
+Arch
+====
+
+As root, do::
+
+  pacman -S libnewt python-pip gcc
+
+Other Distros
+=============
 
 On other distros you need to check the documentation for how to install these packages, the names should be very similar.
   
@@ -38,11 +58,20 @@ Installation
 
 ::
 
-   pip3 install dexbot     [--user]
+  sudo -H pip3 install https://github.com/ihaywood3/DEXBot/archive/master.zip
 
+If you want the latest development version (which may not be tested at all), use git to download::
+
+   git clone git://github.com/ihaywood3/DEXBot/
+   cd DEXBot
+   pip3 install -e .
+
+<<<<<<< HEAD
+=======
 If you add the ``--user`` flag to this command, the binaries of
 ``dexbot`` and ``uptick`` are located in ``~/.local/bin``.
 Otherwise they should be globally reachable.
+>>>>>>> 09c80a792cde22c20228a3efbf212a3efa42e5b2
 
 Adding Keys
 -----------
@@ -52,6 +81,9 @@ bot's account into a local wallet. This can be done using
 ``uptick`` which is installed as a dependency of ``dexbot``::
 
    uptick addkey
+
+``uptick`` will ask you for a passphrase to protect private keys stored in its wallet.
+This has no relation to any passphrase used in the web wallet.
 
 You can get your private key from the BitShares Web Wallet: click the menu on the top right,
 then "Settings", "Accounts", "View keys", then tab "Owner Permissions", click 

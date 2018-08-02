@@ -3,12 +3,17 @@ import json
 import threading
 import queue
 import uuid
+import time
+import datetime
+import re
+import logging
 from appdirs import user_data_dir
 
 from . import helper
 from dexbot import APP_NAME, AUTHOR
 
-from sqlalchemy import create_engine, Column, String, Integer
+import sqlalchemy
+from sqlalchemy import create_engine, Table, Column, String, Integer, MetaData, DateTime, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -30,6 +35,24 @@ class Config(Base):
         self.category = c
         self.key = k
         self.value = v
+
+
+class Journal(Base):
+    __tablename__ = 'journal'
+    id = Column(Integer, primary_key=True)
+    category = Column(String)
+    key = Column(String)
+    amount = Column(Float)
+    stamp = Column(DateTime, default=datetime.datetime.now)
+
+
+class Log(Base):
+    __tablename__ = 'log'
+    id = Column(Integer, primary_key=True)
+    category = Column(String)
+    severity = Column(Integer)
+    message = Column(String)
+    stamp = Column(DateTime, default=datetime. datetime.now)
 
 
 class Orders(Base):
@@ -73,6 +96,15 @@ class Storage(dict):
 
     def clear(self):
         db_worker.clear(self.category)
+
+    def save_journal(self, amounts):
+        db_worker.execute_noreturn(db_worker.save_journal, self.category, amounts)
+
+    def query_journal(self, start, end_=None):
+        return db_worker.execute(db_worker.query_journal, self.category, start, end_)
+
+    def query_log(self, start, end_=None):
+        return db_worker.execute(db_worker.query_log, self.category, start, end_)
 
     def save_order(self, order):
         """ Save the order to the database
@@ -120,7 +152,6 @@ class DatabaseWorker(threading.Thread):
 
         self.task_queue = queue.Queue()
         self.results = {}
-
         self.lock = threading.Lock()
         self.event = threading.Event()
         self.daemon = True
@@ -129,7 +160,7 @@ class DatabaseWorker(threading.Thread):
     def run(self):
         for func, args, token in iter(self.task_queue.get, None):
             if token is not None:
-                args = args+(token,)
+                args = args + (token,)
             func(*args)
 
     def _get_result(self, token):
@@ -228,6 +259,63 @@ class DatabaseWorker(threading.Thread):
             self.session.delete(row)
             self.session.commit()
 
+    def save_journal(self, category, amounts, token=None):
+        now_t = datetime.datetime.now()
+        for key, amount in amounts:
+            e = Journal(key=key, category=category, amount=amount, stamp=now_t)
+            self.session.add(e)
+        self.session.commit()
+
+    def query_journal(self, category, start, end_, token):
+        """Query this bots journal
+        start: datetime of start time
+        end_: datetime of end (None means up to now)
+        """
+        r = self.session.query(Journal).filter(Journal.category == category)
+        if isinstance(start, str):
+            m = re.match("(\\d+)([dw])", start)
+            if m:
+                n = int(m.group(1))
+                start = datetime.datetime.now()
+                if m.group(2) == 'w':
+                    n *= 7
+                start -= datetime.timedelta(days=n)
+        if end_:
+            r = r.filter(Journal.stamp > start, Journal.stamp < end_)
+        else:
+            r = r.filter(Journal.stamp > start)
+        self.set_result(token, r.all())
+
+    def save_log(self, category, severity, message, created, token=None):
+        e = Log(
+            category=category,
+            severity=severity,
+            message=message,
+            stamp=created)
+        self.session.add(e)
+        self.session.commit()
+
+    def query_log(self, category, start, end_, token):
+        """Query this bots log
+        start: datetime of start time
+        end_: datetime of end (None means up to now)
+        """
+        r = self.session.query(Log).filter(Log.category == category)
+        if isinstance(start, str):
+            m = re.match("(\\d+)([dw])", start)
+            if m:
+                n = int(m.group(1))
+                start = datetime.datetime.now()
+                if m.group(2) == 'w':
+                    n *= 7
+                start -= datetime.timedelta(days=n)
+        if end_:
+            r = r.filter(Log.stamp > start, Log.stamp < end_)
+        else:
+            r = r.filter(Log.stamp > start)
+        r = r.order_by(Log.stamp)
+        self.set_result(token, r.all())
+
     def save_order(self, worker, order_id, order):
         self.execute_noreturn(self._save_order, worker, order_id, order)
 
@@ -279,6 +367,40 @@ class DatabaseWorker(threading.Thread):
             for row in results:
                 result[row.order_id] = json.loads(row.order)
         self._set_result(token, result)
+
+
+MAP_LEVELS = {
+    logging.DEBUG: 0,
+    logging.INFO: 1,
+    logging.ERROR: 2,
+    logging.WARN: 2,
+    logging.CRITICAL: 3,
+    logging.FATAL: 3}
+
+
+class SQLiteHandler(logging.Handler):
+    """
+    Logging handler for SQLite.
+    Based on Vinay Sajip's DBHandler class (http://www.red-dove.com/python_logging.html)
+    """
+    # used by email Reporter (but has to be here so it can access db_worker)
+
+    def emit(self, record):
+        # Use default formatting:
+        self.format(record)
+        level = MAP_LEVELS.get(record.levelno, 0)
+        notes = record.msg
+        if record.exc_info:
+            notes += " " + \
+                logging._defaultFormatter.formatException(record.exc_info)
+        # Insert log record:
+        db_worker.execute_noreturn(
+            db_worker.save_log,
+            record.botname,
+            level,
+            notes,
+            datetime.datetime.fromtimestamp(
+                record.created))
 
 
 # Derive sqlite file directory

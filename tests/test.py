@@ -38,6 +38,9 @@ class TestDexbot(unittest.TestCase):
         worker_infrastructure = WorkerInfrastructure(config=TEST_CONFIG,
                                                      bitshares_instance=bitshares_instance)
 
+        import pdb
+        pdb.set_trace()
+
         def wait_then_stop():
             time.sleep(20)
             worker_infrastructure.do_next_tick(worker_infrastructure.stop)

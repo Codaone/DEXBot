@@ -18,6 +18,9 @@ from bitshares.market import Market
 from bitshares.account import Account
 from bitshares.price import FilledOrder, Order, UpdateCallOrder
 from bitshares.instance import shared_bitshares_instance
+from .storage import Storage
+from .statemachine import StateMachine
+from . import graph
 
 MAX_TRIES = 3
 
@@ -37,6 +40,9 @@ ConfigElement = collections.namedtuple('ConfigElement', 'key type default title 
 #       For bool, ignored
 #       For choice: a list of choices, choices are in turn (tag, label) tuples.
 #       labels get presented to user, and tag is used as the value saved back to the config dict
+
+
+MAX_TRIES = 3
 
 
 class BaseStrategy(Storage, StateMachine, Events):
@@ -90,7 +96,7 @@ class BaseStrategy(Storage, StateMachine, Events):
     @classmethod
     def configure(cls, return_base_config=True):
         """
-        Return a list of ConfigElement objects defining the configuration values for 
+        Return a list of ConfigElement objects defining the configuration values for
         this class
         User interfaces should then generate widgets based on this values, gather
         data and save back to the config dictionary for the worker.
@@ -335,6 +341,21 @@ class BaseStrategy(Storage, StateMachine, Events):
         """
         return self._account.balance(asset)
 
+    def get_converted_asset_amount(self, asset):
+        """
+        Returns asset amount converted to base asset amount
+        """
+        base_asset = self.market['base']
+        quote_asset = Asset(asset['symbol'], bitshares_instance=self.bitshares)
+        if base_asset['symbol'] == quote_asset['symbol']:
+            return asset['amount']
+        else:
+            market = Market(
+                base=base_asset,
+                quote=quote_asset,
+                bitshares_instance=self.bitshares)
+            return market.ticker()['latest']['price'] * asset['amount']
+
     @property
     def test_mode(self):
         return self.config['node'] == "wss://node.testnet.bitshares.eu"
@@ -439,7 +460,6 @@ class BaseStrategy(Storage, StateMachine, Events):
             *args,
             **kwargs
         )
-        self.log.debug('Placed buy order {}'.format(buy_transaction))
         buy_order = self.get_order(buy_transaction['orderid'], return_none=return_none)
         if buy_order and buy_order['deleted']:
             # The API doesn't return data on orders that don't exist
@@ -478,7 +498,6 @@ class BaseStrategy(Storage, StateMachine, Events):
             *args,
             **kwargs
         )
-        self.log.debug('Placed sell order {}'.format(sell_transaction))
         sell_order = self.get_order(sell_transaction['orderid'], return_none=return_none)
         if sell_order and sell_order['deleted']:
             # The API doesn't return data on orders that don't exist
@@ -488,6 +507,12 @@ class BaseStrategy(Storage, StateMachine, Events):
             self.recheck_orders = True
 
         return sell_order
+
+    def record_balances(self, baseprice):
+        self.save_journal([('price', baseprice),
+                           (self.market['quote']['symbol'],
+                            self.balance(self.market['quote'])),
+                           (self.market['base']['symbol'], self.balance(self.market['base']))])
 
     def calculate_order_data(self, order, amount, price):
         quote_asset = Amount(amount, self.market['quote']['symbol'])
@@ -503,6 +528,21 @@ class BaseStrategy(Storage, StateMachine, Events):
         self.clear_orders()
         self.cancel_all()
         self.clear()
+
+    def graph(self, start, end_=None):
+        """Draw a graph over the specified time period (both datetime)
+        Uses routine suitable for one-market trading workers
+        More complex workers (arbitrage, etc) may need to override to provide
+        meaningful graphs
+        """
+        data = graph.query_to_dicts(self.query_journal(start, end_))
+        if len(data) < 2:
+            # not enough data to graph
+            return None
+        data = graph.rebase_data(data,
+                                 self.market['quote']['symbol'],
+                                 self.market['base']['symbol'])
+        return graph.do_graph(data)
 
     @staticmethod
     def purge_worker_data(worker_name):

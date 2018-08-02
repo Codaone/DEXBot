@@ -9,6 +9,7 @@ Basics
 
    setup
    configuration
+   reports
 
 Strategies
 ----------
@@ -16,7 +17,9 @@ Strategies
 .. toctree::
    :maxdepth: 1
 
-   wall
+   echo
+   follow_orders
+
 
 Developing own Strategies
 -------------------------
@@ -29,7 +32,7 @@ Developing own Strategies
    storage
    statemachine
    events
-   echo
+   wall
 
 Indices and tables
 ==================

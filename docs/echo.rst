@@ -4,7 +4,7 @@ Simple Echo Strategy
 
 API
 ---
-.. autoclass:: dexbot.strategies.echo.Echo
+.. autoclass:: dexbot.strategies.echo.Strategy
    :members:
 
 Full Source Code

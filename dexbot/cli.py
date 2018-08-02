@@ -100,6 +100,7 @@ def run(ctx):
                 log.debug("sdnotify not available")
         worker.run()
     except errors.NoWorkersAvailable:
+        worker.shutdown()
         sys.exit(70)  # 70= "Software error" in /usr/include/sysexts.h
     finally:
         if ctx.obj['pidfile']:
@@ -127,6 +128,29 @@ def configure(ctx):
     if config.get('systemd_status', 'disabled') == 'enabled':
         click.echo("Starting dexbot daemon")
         os.system("systemctl --user start dexbot")
+
+
+def shell():
+    """ Run dexbot as a shell
+    """
+    if len(sys.argv) > 2 and sys.argv[1] == '-c':
+        # let users who Know What They Are Doing get to the shell of their choice
+        os.execl(sys.argv[2], sys.argv[2])
+    cfg_file = config_file
+    assert os.path.exists(cfg_file), "no config file"
+    with open(cfg_file) as fd:
+        config = yaml.safe_load(fd)
+    while True:
+        configure_dexbot(config, True)
+        with open(cfg_file, "w") as fd:
+            yaml.dump(config, fd, default_flow_style=False)
+        if config['systemd_status'] == 'installed':
+            # we are already installed
+            os.system("systemctl --user restart dexbot")
+        if config['systemd_status'] == 'install':
+            os.system("systemctl --user enable dexbot")
+            os.system("systemctl --user start dexbot")
+            config['systemd_status'] = 'installed'
 
 
 def worker_job(worker, job):

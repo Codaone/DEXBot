@@ -2,17 +2,18 @@
 
 Trading Bot for the BitShares Decentralized Exchange (DEX).
 
-## Build status
-
-master:  
-[![Build Status](https://travis-ci.org/Codaone/DEXBot.svg?branch=master)](https://travis-ci.org/Codaone/DEXBot)
-
 
 **Warning**: This is highly experimental code! Use at your OWN risk!
 
-## Installing and running the software
+This version is a fork made by Ian Haywood. It's is based on the
+[DEXBot project](https://github.com/Codaone/DEXBot) 
+by Codaone Oy, in turn based on xeroc's 
+[stakemachine](https://github.com/xeroc/stakemachine),
 
-See instructions in the [Wiki](https://github.com/Codaone/DEXBot/wiki) for [Linux](https://github.com/Codaone/DEXBot/wiki/Setup-Guide-for-Linux), and [Windows](https://github.com/Codaone/DEXBot/wiki/Setup-Guide-for-Windows). OSX users can try downloading the package or following the Linux guide.
+## Installation
+
+Please see instructions in the 
+[documentation](http://dexbot-ih.readthedocs.io/en/latest/setup.html).
 
 ## Contributing
 

@@ -6,11 +6,20 @@ import threading
 import copy
 
 import dexbot.errors as errors
+import dexbot.report
+
 from dexbot.basestrategy import BaseStrategy
 
 from bitshares import BitShares
 from bitshares.notify import Notify
 from bitshares.instance import shared_bitshares_instance
+
+# FIXME: currently static list of worker strategies: ? how to enumerate workers
+# available and deploy new worker strategies.
+
+STRATEGIES = [('dexbot.strategies.echo', "Echo Test"),
+              ('dexbot.strategies.follow_orders', "Haywood's Follow Orders")]
+
 
 log = logging.getLogger(__name__)
 log_workers = logging.getLogger('dexbot.per_worker')
@@ -29,12 +38,11 @@ class WorkerInfrastructure(threading.Thread):
         view=None
     ):
         super().__init__()
-
         # BitShares instance
         self.bitshares = bitshares_instance or shared_bitshares_instance()
         self.config = copy.deepcopy(config)
         self.view = view
-        self.jobs = set()
+        self.jobs = []
         self.notify = None
         self.config_lock = threading.RLock()
         self.workers = {}
@@ -50,6 +58,22 @@ class WorkerInfrastructure(threading.Thread):
     def init_workers(self, config):
         """ Initialize the workers
         """
+        # set up reporting
+        self.reporters = []
+        for reporter_params in self.config.get("reports", []):
+            reporter_class = getattr(
+                importlib.import_module(reporter_params['module']),
+                reporter_params.get('class', 'Reporter')
+            )
+            reporter_params = reporter_params.copy()
+            del reporter_params['module']
+            if 'class' in reporter_params:
+                del reporter_params['class']
+            reporter_params['worker_infrastructure'] = self
+            reporter_instance = reporter_class(**reporter_params)
+            self.reporters.append(reporter_instance)
+
+        # set up workers
         self.config_lock.acquire()
         for worker_name, worker in config["workers"].items():
             if "account" not in worker:
@@ -105,6 +129,10 @@ class WorkerInfrastructure(threading.Thread):
                 bitshares_instance=self.bitshares
             )
 
+    def shutdown(self):
+        for i in self.reporters:
+            i.shutdown()
+
     # Events
     def on_block(self, data):
         if self.jobs:
@@ -112,9 +140,11 @@ class WorkerInfrastructure(threading.Thread):
                 for job in self.jobs:
                     job()
             finally:
-                self.jobs = set()
+                self.jobs = []
 
         self.config_lock.acquire()
+        for reporter in self.reporters:
+            reporter.ontick()
         for worker_name, worker in self.config["workers"].items():
             if worker_name not in self.workers or self.workers[worker_name].disabled:
                 continue
@@ -202,6 +232,7 @@ class WorkerInfrastructure(threading.Thread):
                     self.workers[worker].pause()
             if self.notify:
                 self.notify.websocket.close()
+            self.shutdown()
 
     def remove_worker(self, worker_name=None):
         if worker_name:
@@ -234,4 +265,4 @@ class WorkerInfrastructure(threading.Thread):
 
     def do_next_tick(self, job):
         """ Add a callable to be executed on the next tick """
-        self.jobs.add(job)
+        self.jobs.append(job)

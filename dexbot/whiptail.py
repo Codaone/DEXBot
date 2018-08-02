@@ -1,14 +1,15 @@
 from __future__ import print_function
 import sys
+import os
 import shlex
 import shutil
 import itertools
-import click
 import os
 import tempfile
 from subprocess import Popen, PIPE
 from collections import namedtuple
 
+import click
 
 # whiptail.py - Use whiptail to display dialog boxes from shell scripts
 # Copyright (C) 2013 Marwan Alsabbagh
@@ -98,12 +99,13 @@ class Whiptail:
 
     def view_text(self, text):
         """Whiptail wants a file but we want to provide a text string"""
-        fd, nam = tempfile.mkstemp()
-        f = os.fdopen(fd)
-        f.write(text)
-        f.close()
-        self.view_file(nam)
-        os.unlink(nam)
+        try:
+            fd, nam = tempfile.mkstemp()
+            with os.fdopen(fd, "w") as f:
+                f.write(text)
+            self.view_file(nam)
+        finally:
+            os.unlink(nam)
 
     def clear(self):
         # tidy up the screen
@@ -133,7 +135,7 @@ class NoWhiptail:
 
     def view_text(self, text):
         click.echo_via_pager(text)
-        
+
     def menu(self, msg='', items=(), default=0):
         click.echo(msg + '\n')
         if isinstance(items, dict):

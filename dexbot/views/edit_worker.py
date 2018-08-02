@@ -50,4 +50,3 @@ class EditWorkerView(QtWidgets.QDialog, Ui_Dialog):
     def handle_remove(self):
         self.parent_widget.remove_widget_dialog()
         self.reject()
-

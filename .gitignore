@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 
+# Emacs backups
+*~
+.#*
+\#*#
+
 # C extensions
 *.so
 
