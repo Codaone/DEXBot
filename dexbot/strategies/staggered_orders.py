@@ -1,4 +1,7 @@
+import sys
 import math
+import traceback
+import bitsharesapi.exceptions
 from datetime import datetime, timedelta
 from bitshares.dex import Dex
 
@@ -122,6 +125,7 @@ class Strategy(StrategyBase):
         self.base_balance = None
         self.quote_asset_threshold = 0
         self.base_asset_threshold = 0
+        self.min_increase_factor = 1.15
         # Initial balance history elements should not be equal to avoid immediate bootstrap turn off
         self.quote_balance_history = [1, 2, 3]
         self.base_balance_history = [1, 2, 3]
@@ -199,16 +203,31 @@ class Strategy(StrategyBase):
         # BASE asset check
         if self.base_balance > self.base_asset_threshold:
             # Allocate available BASE funds
+            base_allocated = False
             self.allocate_asset('base', self.base_balance)
+        else:
+            base_allocated = True
 
         # QUOTE asset check
         if self.quote_balance > self.quote_asset_threshold:
             # Allocate available QUOTE funds
+            quote_allocated = False
             self.allocate_asset('quote', self.quote_balance)
+        else:
+            quote_allocated = True
 
         # Send pending operations
         if not self.bitshares.txbuffer.is_empty():
-            self.execute()
+            try:
+                self.execute()
+            except bitsharesapi.exceptions.RPCError:
+                """ Handle exception without stopping the worker. The goal is to handle race condition when partially
+                    filled order was further filled before we actually replaced them.
+                """
+                self.log.warning('Got exception during broadcasting trx:')
+                traceback.print_exc(file=sys.stdout)
+                self.log.warning('Ignoring that exception and continue')
+                return
         self.bitshares.bundle = False
 
         # Maintain the history of free balances after maintenance runs.
@@ -268,24 +287,41 @@ class Strategy(StrategyBase):
                 self.log_maintenance_time()
                 return
 
-        # Measure which price is closer to the center
-        buy_distance = self.market_center_price - highest_buy_price
-        sell_distance = lowest_sell_price - self.market_center_price
+        # What amount of quote may be obtained if buy using avail base balance
+        can_obtain_quote = self.base_balance['amount'] * self.market_center_price
+        side_to_cancel = None
 
-        if buy_distance > sell_distance:
-            if self.market_center_price > highest_buy_price * (1 + self.target_spread):
-                # Cancel lowest buy order because center price moved up.
-                # On the next run there will be placed next buy order closer to the new center
-                self.log.info('Free balances are not changing and we are not in bootstrap mode and target spread is '
-                              'not reached. Cancelling lowest buy order as a fallback.')
-                self.cancel(self.buy_orders[-1])
+        """ The logic is following: compare on which side we have bigger free balance, then cancel furthest order on
+            that side to be able to place closer order. This is for situations when amount obtained from previous trade
+            is not enough to place closer order.
+        """
+        if can_obtain_quote > self.quote_balance['amount'] and not base_allocated:
+            side_to_cancel = 'buy'
+        elif self.quote_balance['amount'] > can_obtain_quote and not quote_allocated:
+            side_to_cancel = 'sell'
+
+        if not side_to_cancel:
+            """ Balance-based cancel logic didn't give a result, so use logic based on distance to market center
+            """
+            # Measure which price is closer to the center
+            buy_distance = self.market_center_price - highest_buy_price
+            sell_distance = lowest_sell_price - self.market_center_price
+
+            if buy_distance > sell_distance:
+                side_to_cancel = 'buy'
+            else:
+                side_to_cancel = 'sell'
+
+        if side_to_cancel == 'buy':
+            self.log.info('Free balances are not changing, bootstrap is off and target spread is not reached. '
+                          'Cancelling lowest buy order as a fallback')
+            self.cancel(self.buy_orders[-1])
+        elif side_to_cancel == 'sell':
+            self.log.info('Free balances are not changing, bootstrap is off and target spread is not reached. '
+                          'Cancelling highest sell order as a fallback')
+            self.cancel(self.sell_orders[-1])
         else:
-            if self.market_center_price < lowest_sell_price * (1 - self.target_spread):
-                # Cancel highest sell order because center price moved down.
-                # On the next run there will be placed next sell closer to the new center
-                self.log.info('Free balances are not changing and we are not in bootstrap mode and target spread is '
-                              'not reached. Cancelling highest sell order as a fallback.')
-                self.cancel(self.sell_orders[-1])
+            self.log.info('Target spread is not reached but cannot determine what furthest order to cancel')
 
         self.last_check = datetime.now()
         self.log_maintenance_time()
@@ -467,8 +503,12 @@ class Strategy(StrategyBase):
                     self.place_closer_order(asset, closest_own_order)
                 else:
                     # Place order limited by size of the opposite-side order
-                    if (self.mode == 'mountain' or
-                            (self.mode == 'buy_slope' and asset == 'base') or
+                    if self.mode == 'mountain':
+                        opposite_asset_limit = closest_opposite_order['base']['amount'] * (1 + self.increment)
+                        own_asset_limit = None
+                        self.log.debug('Limiting {} order by opposite order: {} {}'.format(
+                                       order_type, opposite_asset_limit, opposite_symbol))
+                    elif ((self.mode == 'buy_slope' and asset == 'base') or
                             (self.mode == 'sell_slope' and asset == 'quote')):
                         opposite_asset_limit = None
                         own_asset_limit = closest_opposite_order['quote']['amount']
@@ -489,33 +529,49 @@ class Strategy(StrategyBase):
                                            order_type, opposite_asset_limit, opposite_symbol))
                     self.place_closer_order(asset, closest_own_order, own_asset_limit=own_asset_limit,
                                             opposite_asset_limit=opposite_asset_limit, allow_partial=False)
-            elif not self.check_partial_fill(closest_own_order):
-                # Replace closest own order if `fill % > default threshold`
+            elif not self.check_partial_fill(closest_own_order) and not self.check_partial_fill(closest_opposite_order):
+                """ Replace closest own order if `fill % > default threshold` and only when opposite order is also
+                    partially filled. This would prevent an abuse case when we are operationg on inactive market. An
+                    attacker can massively dump the price and then he can buy back the asset cheaper. Only applicable
+                    when sides are massively imbalanced. Though in the normal market a similar condition may happen
+                    naturally on significant price drops. This check helps to redistribute funds more smoothly.
+                """
                 self.replace_partially_filled_order(closest_own_order)
                 return
             elif not opposite_orders:
-                # Do not try to do anything than placing higher buy whether there is no sell orders
+                # Do not try to do anything than placing closer order whether there is no opposite orders
                 return
-            elif not self.check_partial_fill(closest_opposite_order, fill_threshold=0):
-                """ Partially filled order on the opposite side, wait until closest order will be fully
-                    fillled. Previously we did reservation of funds for next order and allocated remainder, but
-                    this approach is not well-suited for valley mode, causing liquidity decrease around center.
-                """
-                self.log.debug('Partially filled order on opposite side, reserving funds until fully filled')
-                return
-            elif ((asset == 'base' and furthest_own_order_price /
-                   (1 + self.increment) < self.lower_bound) or
-                    (asset == 'quote' and furthest_own_order_price *
-                     (1 + self.increment) > self.upper_bound)):
-                # Lower/upper bound has been reached and now will start allocating rest of the balance.
-                self.bootstrapping = False
-                self.log.debug('Increasing sizes of {} orders'.format(order_type))
-                self.increase_order_sizes(asset, asset_balance, own_orders)
             else:
-                # Range bound is not reached, we need to add additional orders at the extremes
-                self.bootstrapping = False
-                self.log.debug('Placing further order than current furthest {} order'.format(order_type))
-                self.place_further_order(asset, furthest_own_order, allow_partial=True)
+                if not self.check_partial_fill(closest_opposite_order, fill_threshold=0):
+                    """ Detect partially filled order on the opposite side and reserve appropriate amount to place
+                        closer order. We adding some additional reserve to be able to place next order whether
+                        new allocation round will be started, this is mostly for valley-like modes.
+                    """
+                    funds_to_reserve = 0
+                    additional_reserve = max(1 + self.increment, self.min_increase_factor) * 1.05
+                    closer_own_order = self.place_closer_order(asset, closest_own_order, place_order=False)
+
+                    if asset == 'base':
+                        funds_to_reserve = closer_own_order['amount'] * closer_own_order['price'] * additional_reserve
+                    elif asset == 'quote':
+                        funds_to_reserve = closer_own_order['amount'] * additional_reserve
+                    self.log.debug('Partially filled order on opposite side, reserving funds for next {} order: '
+                                   '{:.8f} {}'.format(order_type, funds_to_reserve, own_symbol))
+                    asset_balance -= funds_to_reserve
+                if asset_balance > own_threshold:
+                    if ((asset == 'base' and furthest_own_order_price /
+                         (1 + self.increment) < self.lower_bound) or
+                            (asset == 'quote' and furthest_own_order_price *
+                             (1 + self.increment) > self.upper_bound)):
+                        # Lower/upper bound has been reached and now will start allocating rest of the balance.
+                        self.bootstrapping = False
+                        self.log.debug('Increasing sizes of {} orders'.format(order_type))
+                        self.increase_order_sizes(asset, asset_balance, own_orders)
+                    else:
+                        # Range bound is not reached, we need to add additional orders at the extremes
+                        self.bootstrapping = False
+                        self.log.debug('Placing further order than current furthest {} order'.format(order_type))
+                        self.place_further_order(asset, furthest_own_order, allow_partial=True)
         else:
             # Place first buy order as close to the lower bound as possible
             self.bootstrapping = True
@@ -563,12 +619,6 @@ class Strategy(StrategyBase):
         order_type = ''
         symbol = ''
         precision = 0
-
-        # First of all, make sure all orders are not partially filled
-        for order in orders:
-            if not self.check_partial_fill(order, fill_threshold=0):
-                self.replace_partially_filled_order(order)
-                return
 
         if asset == 'quote':
             total_balance = self.quote_total_balance
@@ -651,11 +701,6 @@ class Strategy(StrategyBase):
                             """
                             new_order_amount = closer_bound / (1 + self.increment * 0.2)
 
-                    # Limit order to available balance
-                    if asset_balance < new_order_amount - order_amount:
-                        new_order_amount = order_amount + asset_balance['amount']
-                        self.log.debug('Limiting new {} order to avail balance: {:.8f} {}'
-                                       .format(order_type, new_order_amount, symbol))
                     quote_amount = 0
                     price = 0
 
@@ -665,6 +710,12 @@ class Strategy(StrategyBase):
                     elif asset == 'base':
                         price = order['price']
                         quote_amount = new_order_amount / price
+
+                    if asset_balance < new_order_amount - order['for_sale']['amount']:
+                        # Balance should be enough to replace partially filled order
+                        self.log.debug('Not enough balance to increase {} order at price {:.8f}'
+                                       .format(order_type, price))
+                        return
 
                     self.log.info('Increasing {} order at price {:.8f} from {:.{prec}f} to {:.{prec}f} {}'
                                   .format(order_type, price, order_amount, new_order_amount, symbol, prec=precision))
@@ -680,7 +731,6 @@ class Strategy(StrategyBase):
         elif (self.mode == 'valley' or
               (self.mode == 'buy_slope' and asset == 'base') or
               (self.mode == 'sell_slope' and asset == 'quote')):
-
             """ Starting from the furthest order, for each order, see if it is approximately
                 maximum size.
                 If it is, move on to next.
@@ -689,14 +739,27 @@ class Strategy(StrategyBase):
                 If furthest is reached, increase it to maximum size.
 
                 Maximum size is (example for buy orders):
-                1. As many "base" as the order below (closer_order_bound)
+                1. As many "base" as the further order (further_order_bound)
+                2. As many "base" as the order closer to center (closer_order_bound)
             """
             orders_count = len(orders)
             orders = list(reversed(orders))
 
+            closest_order = orders[-1]
+            closest_order_bound = closest_order['base']['amount'] * (1 + self.increment)
+
             for order in orders:
                 order_index = orders.index(order)
                 order_amount = order['base']['amount']
+
+                if order_index == 0:
+                    # This is a furthest order
+                    further_order_bound = order['base']['amount']
+                    furthest_order_bound = order['base']['amount']
+                else:
+                    # Not a furthest order
+                    further_order = orders[order_index - 1]
+                    further_order_bound = further_order['base']['amount']
 
                 if order_index + 1 < orders_count:
                     # Closer order is an order which one-step closer to the center
@@ -708,27 +771,51 @@ class Strategy(StrategyBase):
                         Calculate new order amount based on orders count, but do not allow to perform too small 
                         increase rounds. New lowest buy / highest sell should be higher by at least one increment.
                     """
-                    closer_order_bound = order_amount * (1 + self.increment)
+                    closer_order_bound = closest_order_bound
                     new_amount = (total_balance / orders_count) / (1 + self.increment / 100)
-                    if new_amount > closer_order_bound:
+                    if furthest_order_bound < new_amount > closer_order_bound:
                         # Maximize order up to max possible amount if we can
                         closer_order_bound = new_amount
 
-                """ Check whether order amount is less than closer order and the diff is more than 50% of one increment
-                    Note: we can use only 50% or less diffs. Bigger will not work. For example, with diff 80% an order
-                    may have an actual difference like 30% from closer and 70% from further.
-                """
-                if (order_amount * (1 + self.increment / 10) < closer_order_bound and
+                order_amount_normalized = order_amount * (1 + self.increment / 10)
+                need_increase = False
+
+                if (order_amount_normalized < further_order_bound and
+                        further_order_bound - order_amount >= order_amount * self.increment / 2 and
+                        order_amount_normalized < closest_order_bound):
+                    """ Check whether order amount is less than further order and also less than `closer order +
+                        increment`. We need this check to be able to increase closer orders more smoothly. Here is the
+                        example:
+
+                        [100 100 100 10 10 10] -- starting point, buy orders, result of imbalanced sides
+                        [100 100 100 12 10 10]
+                        [100 100 100 12 12 10]
+                        [100 100 100 12 12 12]
+
+                        Note: This check is taking precedence because we need to begin new increase round only after all
+                        orders will be max-sized.
+                    """
+                    need_increase = True
+
+                    # To speed up the process, use at least N% increases
+                    increase_factor = max(1 + self.increment, self.min_increase_factor)
+                    # Do not allow to increase more than further order amount
+                    new_order_amount = min(closer_order_bound * increase_factor, further_order_bound)
+
+                    if new_order_amount < order_amount_normalized:
+                        # Skip order if new amount is less than current for any reason
+                        need_increase = False
+
+                elif (order_amount_normalized < closer_order_bound and
                         closer_order_bound - order_amount >= order_amount * self.increment / 2):
-
+                    """ Check whether order amount is less than closer or order and the diff is more than 50% of one
+                        increment. Note: we can use only 50% or less diffs. Bigger will not work. For example, with 
+                        diff 80% an order may have an actual difference like 30% from closer and 70% from further.
+                    """
                     new_order_amount = closer_order_bound
+                    need_increase = True
 
-                    # Limit order to available balance
-                    if asset_balance < new_order_amount - order_amount:
-                        new_order_amount = order_amount + asset_balance['amount']
-                        self.log.debug('Limiting new order to avail asset balance: {:.8f} {}'
-                                       .format(new_order_amount, symbol))
-
+                if need_increase:
                     price = 0
                     quote_amount = 0
 
@@ -738,6 +825,13 @@ class Strategy(StrategyBase):
                     elif asset == 'base':
                         price = order['price']
                         quote_amount = new_order_amount / price
+
+                    if asset_balance < new_order_amount - order['for_sale']['amount']:
+                        # Balance should be enough to replace partially filled order
+                        self.log.debug('Not enough balance to increase {} order at price {:.8f}'
+                                       .format(order_type, price))
+                        return
+
                     self.log.info('Increasing {} order at price {:.8f} from {:.{prec}f} to {:.{prec}f} {}'
                                   .format(order_type, price, order_amount, new_order_amount, symbol, prec=precision))
                     self.log.debug('Cancelling {} order in increase_order_sizes(); mode: {}, amount: {}, price: {:.8f}'
@@ -751,48 +845,88 @@ class Strategy(StrategyBase):
                     return
 
         elif self.mode == 'neutral':
+            """ Starting from the furthest order, for each order, see if it is approximately
+                maximum size.
+                If it is, move on to next.
+                If not, cancel it and replace with maximum size order. Maximum order size will be a
+                size of closer-to-center order. Then return.
+                If furthest is reached, increase it to maximum size.
+
+                Maximum size is (example for buy orders):
+                1. As many "base * sqrt(1 + increment)" as the further order (further_order_bound)
+                2. As many "base / sqrt(1 + increment)" as the order closer to center (closer_order_bound)
+            """
+
             orders_count = len(orders)
             orders = list(reversed(orders))
+            closest_order = orders[-1]
 
             for order in orders:
                 order_index = orders.index(order)
                 order_amount = order['base']['amount']
 
+                if order_index == 0:
+                    # This is a furthest order
+                    further_order_bound = order['base']['amount']
+                    furthest_order_bound = order['base']['amount']
+                else:
+                    # Not a furthest order
+                    further_order = orders[order_index - 1]
+                    further_order_bound = further_order['base']['amount'] * math.sqrt(1 + self.increment)
+
                 if order_index + 1 < orders_count:
                     # Closer order is an order which one-step closer to the center
                     closer_order = orders[order_index + 1]
                     closer_order_bound = closer_order['base']['amount'] / math.sqrt(1 + self.increment)
+                    is_closest_order = False
                 else:
-                    closer_order_bound = order_amount * math.sqrt(1 + self.increment)
+                    is_closest_order = True
+                    closer_order_bound = order['base']['amount'] * (1 + self.increment)
 
                     new_orders_sum = 0
                     amount = order_amount
                     for o in orders:
                         new_orders_sum += amount
                         amount = amount / math.sqrt(1 + self.increment)
+                    virtual_furthest_order_bound = amount * (total_balance / new_orders_sum)
                     new_amount = order_amount * (total_balance / new_orders_sum)
 
-                    if new_amount > closer_order_bound:
+                    if new_amount > closer_order_bound and virtual_furthest_order_bound > furthest_order_bound:
                         # Maximize order up to max possible amount if we can
                         closer_order_bound = new_amount
 
-                self.log.debug('order amount: {:.8f}, closer_order_bound: {:.8f}'
-                               .format(order_amount, closer_order_bound))
-                self.log.debug('diff: {:.8f}, half of increase: {:.8f}'
-                               .format(closer_order_bound - order_amount,
-                                       order_amount * (math.sqrt(1 + self.increment) - 1) / 2))
+                need_increase = False
+                order_amount_normalized = order_amount * (1 + self.increment / 10)
 
-                if (order_amount * (1 + self.increment / 10) < closer_order_bound and
+                if (order_amount_normalized < further_order_bound and
+                        further_order_bound - order_amount >= order_amount * (math.sqrt(1 + self.increment) - 1) / 2):
+                    # Order is less than further order and diff is more than `increment / 2`
+
+                    if is_closest_order:
+                        new_order_amount = closer_order_bound
+                        need_increase = True
+                    else:
+                        price = closest_order['price']
+                        amount = closest_order['base']['amount']
+                        while price > order['price'] * (1 + self.increment / 10):
+                            # Calculate closer order amount based on current closest order
+                            previous_amount = amount
+                            price = price / (1 + self.increment)
+                            amount = amount / math.sqrt(1 + self.increment)
+                        if order_amount_normalized < previous_amount:
+                            # Current order is less than virtually calculated next order
+                            # Do not allow to increase more than further order amount
+                            new_order_amount = min(order['base']['amount'] * (1 + self.increment), further_order_bound)
+                            need_increase = True
+
+                elif (order_amount_normalized < closer_order_bound and
                         closer_order_bound - order_amount >= order_amount * (math.sqrt(1 + self.increment) - 1) / 2):
+                    # Order is less than closer order and diff is more than `increment / 2`
 
                     new_order_amount = closer_order_bound
+                    need_increase = True
 
-                    # Limit order to available balance
-                    if asset_balance < new_order_amount - order_amount:
-                        new_order_amount = order_amount + asset_balance['amount']
-                        self.log.debug('Limiting new order to avail asset balance: {:.8f} {}'
-                                       .format(new_order_amount, symbol))
-
+                if need_increase:
                     price = 0
 
                     if asset == 'quote':
@@ -801,6 +935,13 @@ class Strategy(StrategyBase):
                     elif asset == 'base':
                         price = order['price']
                         quote_amount = new_order_amount / price
+
+                    if asset_balance < new_order_amount - order['for_sale']['amount']:
+                        # Balance should be enough to replace partially filled order
+                        self.log.debug('Not enough balance to increase {} order at price {:.8f}'
+                                       .format(order_type, price))
+                        return
+
                     self.log.info('Increasing {} order at price {:.8f} from {:.{prec}f} to {:.{prec}f} {}'
                                   .format(order_type, price, order_amount, new_order_amount, symbol, prec=precision))
                     self.log.debug('Cancelling {} order in increase_order_sizes(); mode: {}'
@@ -827,12 +968,19 @@ class Strategy(StrategyBase):
         if fill_threshold is None:
             fill_threshold = self.partial_fill_threshold
 
+        if self.is_buy_order(order):
+            order_type = 'buy'
+            price = order['price']
+        else:
+            order_type = 'sell'
+            price = order['price'] ** -1
+
         if order['for_sale']['amount'] != order['base']['amount']:
             diff_abs = order['base']['amount'] - order['for_sale']['amount']
             diff_rel = diff_abs / order['base']['amount']
             if diff_rel > fill_threshold:
-                self.log.debug('Partially filled order: {} @ {:.8f}, filled: {:.2%}'.format(
-                               order['base']['amount'], order['price'], diff_rel))
+                self.log.debug('Partially filled {} order: {} {} @ {:.8f}, filled: {:.2%}'.format(
+                               order_type, order['base']['amount'], order['base']['symbol'], price, diff_rel))
                 return False
         return True
 
@@ -900,12 +1048,12 @@ class Strategy(StrategyBase):
         # Check for instant fill
         if asset == 'base':
             price = order['price'] * (1 + self.increment)
-            if not self.is_instant_fill_enabled and price > float(self.ticker().get('lowestAsk')):
+            if not self.is_instant_fill_enabled and price > float(self.ticker().get('lowestAsk')) and place_order:
                 self.log.info('Refusing to place an order which crosses lowest ask')
                 return None
         elif asset == 'quote':
             price = (order['price'] ** -1) / (1 + self.increment)
-            if not self.is_instant_fill_enabled and price < float(self.ticker().get('highestBid')):
+            if not self.is_instant_fill_enabled and price < float(self.ticker().get('highestBid')) and place_order:
                 self.log.info('Refusing to place an order which crosses highest bid')
                 return None
 
@@ -964,8 +1112,10 @@ class Strategy(StrategyBase):
                     quote_amount = balance
 
         if place_order and asset == 'base':
+            self.log.info('Placing closer buy order')
             self.place_market_buy_order(quote_amount, price)
         elif place_order and asset == 'quote':
+            self.log.info('Placing closer sell order')
             self.place_market_sell_order(quote_amount, price)
 
         return {"amount": quote_amount, "price": price}
@@ -1039,8 +1189,10 @@ class Strategy(StrategyBase):
                     quote_amount = balance
 
         if place_order and asset == 'base':
+            self.log.info('Placing further buy order')
             self.place_market_buy_order(quote_amount, price)
         elif place_order and asset == 'quote':
+            self.log.info('Placing further sell order')
             self.place_market_sell_order(quote_amount, price)
 
         return {"amount": quote_amount, "price": price}
