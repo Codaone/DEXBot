@@ -100,31 +100,13 @@ class BaseStrategy(Storage, StateMachine, Events):
         NOTE: when overriding you almost certainly will want to call the ancestor
         and then add your config values to the list.
         """
-
-        # External exchanges used to calculate center price
-        exchanges = [
-            ('gecko', 'coingecko'),
-            ('ccxt-kraken', 'kraken'),
-            ('ccxt-bitfinex', 'bitfinex'),
-            ('ccxt-gdax', 'gdax'),
-            ('ccxt-binance', 'binance')
-        ]
-
         # These configs are common to all bots
         base_config = [
-            ConfigElement('account', 'string', '', 'Account',
-                          'BitShares account name for the bot to operate with',
-                          ''),
-            ConfigElement('market', 'string', 'USD:BTS', 'Market',
-                          'BitShares market to operate on, in the format ASSET:OTHERASSET, for example \"USD:BTS\"',
-                          r'[A-Z\.]+[:\/][A-Z\.]+'),
-            ConfigElement('external_center_price', 'bool', True,
-                          'Use External center price (if not available, defaults to manual center price)',
-                          'External center price expressed in base asset: BASE/QUOTE', None),
-            ConfigElement('external_center_price_source', 'choice', 'gecko', 'External Source',
-                          'External Price Source, select one', exchanges),
-            ConfigElement('fee_asset', 'string', 'BTS', 'Fee asset',
-                          'Asset to be used to pay transaction fees',
+            ConfigElement("account", "string", "", "Account", "BitShares account name for the bot to operate with", ""),
+            ConfigElement("market", "string", "USD:BTS", "Market",
+                          "BitShares market to operate on, in the format ASSET:OTHERASSET, for example \"USD:BTS\"",
+                          r"[A-Z\.]+[:\/][A-Z\.]+"),
+            ConfigElement('fee_asset', 'string', 'BTS', 'Fee asset', 'Asset to be used to pay transaction fees',
                           r'[A-Z\.]+')
         ]
         if return_base_config:
@@ -192,10 +174,6 @@ class BaseStrategy(Storage, StateMachine, Events):
         # Recheck flag - Tell the strategy to check for updated orders
         self.recheck_orders = False
 
-        # Set external price source
-        if self.worker.get('external_center_price', False):
-            self.external_price_source = self.worker.get('external_center_price_source')
-
         # Set fee asset
         fee_asset_symbol = self.worker.get('fee_asset')
         if fee_asset_symbol:
@@ -214,7 +192,8 @@ class BaseStrategy(Storage, StateMachine, Events):
         self.disabled = False
 
         # Order expiration time in seconds
-        self.expiration = 60 * 60 * 24 * 365 * 5
+        self.expiration = 60 * 60 
+# * 24 * 365 * 5
 
         # buy/sell actions will return order id by default
         self.returnOrderId = 'head'
@@ -276,27 +255,33 @@ class BaseStrategy(Storage, StateMachine, Events):
 
         if asset_offset:
             total_balance = self.total_balance(order_ids)
-            total = (total_balance['quote'] * calculated_center_price) + total_balance['base']
-
-            if not total:  # Prevent division by zero
-                balance = 0
+            ticker = self.market.ticker()
+            highest_bid = ticker.get("highestBid")
+            lowest_ask = ticker.get("lowestAsk")
+            total = total_balance['quote'] * float(lowest_ask) + total_balance['base']
+            if not total:
+                balance = 0.5 
             else:
-                # Returns a value between -1 and 1
-                balance = (total_balance['base'] / total) * 2 - 1
-
-            if balance < 0:
-                # With less of base asset center price should be offset downward
-                calculated_center_price = calculated_center_price / math.sqrt(1 + spread * (balance * -1))
-            elif balance > 0:
-                # With more of base asset center price will be offset upwards
-                calculated_center_price = calculated_center_price * math.sqrt(1 + spread * balance)
-            else:
-                calculated_center_price = calculated_center_price
-
-        # Calculate final_offset_price if manual center price offset is given
+                balance = (total_balance['base'] / total)
+                lowest_price = calculated_center_price / (1 + spread)
+                highest_price = calculated_center_price * (1 + spread)
+# Returns a value between -1 and 1 # balance = (total_balance['base'] / total) * 2 - 1
+                if lowest_price < highest_bid: lowest_price = highest_bid
+                if highest_price > lowest_ask: highest_price = lowest_ask
+                calculated_center_price = math.pow(highest_price, balance) * math.pow(lowest_price, 1 - balance)
+#            if balance < 0:
+# With less of base asset center price should be offset downward
+#                calculated_center_price = calculated_center_price / math.sqrt(1 + spread * (balance * -1))
+#            elif balance > 0:
+# With more of base asset center price will be offset upwards
+#                calculated_center_price = calculated_center_price * math.sqrt(1 + spread * balance)
+#            else:
+#                calculated_center_price = calculated_center_price
+# Calculate final_offset_price if manual center price offset is given
         if manual_offset:
-            calculated_center_price = calculated_center_price + (calculated_center_price * manual_offset)
-
+            if manual_offset < 0: calculated_center_price = calculated_center_price / (1 - manual_offset)
+            elif manual_offset > 0: calculated_center_price = calculated_center_price * (1 + manual_offset)
+#    bad symmetry  #  calculated_center_price = calculated_center_price + (calculated_center_price * manual_offset)
         return calculated_center_price
 
     @property

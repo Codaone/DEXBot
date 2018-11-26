@@ -44,14 +44,14 @@ class Strategy(StrategyBase):
             ConfigElement('partial_fill_threshold', 'float', 30, 'Fill threshold',
                           'Order fill threshold to reset orders', (0, 100, 2, '%')),
             ConfigElement('reset_on_price_change', 'bool', False, 'Reset orders on center price change',
-                          'Reset orders when center price is changed more than threshold (set False for external feeds)', None),
+                          'Reset orders when center price is changed more than threshold', None),
             ConfigElement('price_change_threshold', 'float', 2, 'Price change threshold',
                           'Define center price threshold to react on', (0, 100, 2, '%')),
             ConfigElement('custom_expiration', 'bool', False, 'Custom expiration',
                           'Override order expiration time to trigger a reset', None),
-            ConfigElement('expiration_time', 'int', 157680000, 'Order expiration time',
+            ConfigElement('expiration_time', 'int', 3600, 'Order expiration time',
                           'Define custom order expiration time to force orders reset more often, seconds',
-                          (30, 157680000, ''))
+                          (30, 3600, ''))
         ]
 
     @classmethod
@@ -75,26 +75,20 @@ class Strategy(StrategyBase):
         self.error_onAccount = self.error
 
         # Market status
-        self.market_center_price = self.get_market_center_price(suppress_errors=True)        
+        self.market_center_price = self.get_market_center_price(suppress_errors=True)
         self.empty_market = False
 
         if not self.market_center_price:
             self.empty_market = True
-            
+
         # Worker parameters
         self.is_center_price_dynamic = self.worker['center_price_dynamic']
         if self.is_center_price_dynamic:
             self.center_price = None
             self.center_price_depth = self.worker.get('center_price_depth', 0)
         else:
-            external_source = self.external_price_source
-            if external_source != 'none':
-                self.center_price = self.get_external_market_center_price()
-                if self.center_price is None:
-                    self.center_price = self.worker["center_price"] # set as manual
-            else:
-                self.center_price = self.worker["center_price"]
-            
+            self.center_price = self.worker["center_price"]
+
         self.is_relative_order_size = self.worker.get('relative_order_size', False)
         self.is_asset_offset = self.worker.get('center_price_offset', False)
         self.manual_offset = self.worker.get('manual_offset', 0) / 100
@@ -336,7 +330,8 @@ class Strategy(StrategyBase):
             :param float | manual_offset:
             :return: Center price with manual offset
         """
-        return center_price + (center_price * manual_offset)
+        if manual_offset < 0: return center_price / (1 - manual_offset)
+        else: return center_price * (1 + manual_offset)
 
     def check_orders(self, *args, **kwargs):
         """ Tests if the orders need updating
