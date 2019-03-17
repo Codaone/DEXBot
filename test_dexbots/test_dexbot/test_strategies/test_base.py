@@ -4,7 +4,10 @@ class test_StrategyBase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         from bitshares import BitShares
+        from bitshares.account import Account
         self.bitShares=BitShares('wss://node.testnet.bitshares.eu')
+        self.bitShares.account='dexbot-test1'
+        self.account=Account('dexbot-test1',bitshares_instance=self.bitShares)
     def setUp(self):
         self.strategy_base=StrategyBase('Worker 2',bitshares_instance=self.bitShares)
     def test_configure(self):
@@ -12,18 +15,22 @@ class test_StrategyBase(unittest.TestCase):
         base_config=StrategyBase.configure()
         for e in base_config:
             self.assertIsInstance(e,ConfigElement,'configura() not retrun a ConfigElement of object!')
+            # print(e)
     def test_configure_details(self):
         from dexbot.strategies.base import ConfigElement
         config_details=StrategyBase.configure_details()
         for e in config_details:
             self.assertIsInstance(e,ConfigElement,'configura_details() not retrun a ConfigElement of object!')
+            # print(e)
     def test_account_total_value(self):
-        test_q=self.strategy_base.account_total_value('TEST')
-        self.assertEqual(1000,test_q,"dexbot-test1's balance is wrong! ")
-        print(test_q)
+        balance_amount=self.account.balance('TEST')
+        test_account_total_value=self.strategy_base.account_total_value('TEST')
+        self.assertEqual(balance_amount,test_account_total_value,"dexbot-test1's balance is wrong! ")
+        print(balance_amount)
     def test_balance(self):
-        test_q=self.strategy_base.balance('TEST')
-        self.assertEqual(1000,test_q,"dexbot-test1's TEST balance is wrong!")
+        balance_amount=self.account.balance('TEST')
+        test_balance=self.strategy_base.balance('TEST')
+        self.assertEqual(balance_amount,test_balance,"dexbot-test1's TEST balance is wrong!")
     def test_calculate_order_data(self):
         from bitshares.price import FilledOrder, Order, UpdateCallOrder
         from bitshares.amount import Amount, Asset
@@ -35,12 +42,25 @@ class test_StrategyBase(unittest.TestCase):
         self.assertEqual(20,orders['base'],'calculate_order_data() error!')
         self.assertEqual(2,orders['price'],'calculate_order_data() error!')
     def test_calculate_worker_value(self):
-        total_test=1000
-        total_test_calculate=self.strategy_base.calculate_worker_value('TEST')
-        self.assertEqual(total_test,total_test_calculate,'calculate_worker_value() error!')
+        total_account_balance=self.account.balance('TEST')
+        total_account_calculate=self.strategy_base.calculate_worker_value('TEST')
+        self.assertEqual(total_account_balance,total_account_calculate,'calculate_worker_value() error!')
     def test_cancel_all_orders(self):
-
-        self.strategy_base.cancel_all_orders()
+        from bitshares.market import Market
+        market=Market('TEST:USD',bitshares_instance=self.bitShares)
+        if market.bitshares.wallet.locked():
+            market.bitshares.wallet.unlock('123')
+        r=market.sell(
+            1,
+            10,
+            expiration=60*60,
+            account='dexbot-test1',
+            returnOrderId=True
+        )
+        if r:
+            self.strategy_base.cancel_all_orders()
+            ditc_openorders=market.accountopenorders(account='dexbot-test1')
+            self.assertListEqual(ditc_openorders,[],'order is not cancel!') 
     def test_cancel_orders(self):
         pass
     def test_count_asset(self):
