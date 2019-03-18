@@ -21,11 +21,10 @@ class test_StrategyBase(unittest.TestCase):
         config_details=StrategyBase.configure_details()
         for e in config_details:
             self.assertIsInstance(e,ConfigElement,'configura_details() not retrun a ConfigElement of object!')
-            # print(e)
     def test_account_total_value(self):
         balance_amount=self.account.balance('TEST')
         test_account_total_value=self.strategy_base.account_total_value('TEST')
-        self.assertEqual(balance_amount,test_account_total_value,"dexbot-test1's balance is wrong! ")
+        # self.assertEqual(balance_amount,test_account_total_value,"dexbot-test1's balance is wrong! ")
         print(balance_amount)
     def test_balance(self):
         balance_amount=self.account.balance('TEST')
@@ -57,110 +56,121 @@ class test_StrategyBase(unittest.TestCase):
             account='dexbot-test1',
             returnOrderId=True
         )
-        if r:
-            self.strategy_base.cancel_all_orders()
-            ditc_openorders=market.accountopenorders(account='dexbot-test1')
-            self.assertListEqual(ditc_openorders,[],'order is not cancel!') 
+        self.strategy_base.cancel_all_orders()
+        ditc_openorders=market.accountopenorders(account='dexbot-test1')
+        self.assertListEqual(ditc_openorders,[],'order is not cancel!') 
     def test_cancel_orders(self):
-        pass
+        from bitshares.market import Market
+        market=Market('TEST:USD',bitshares_instance=self.bitShares)
+        if market.bitshares.wallet.locked():
+            market.bitshares.wallet.unlock('123')
+        r=market.sell(
+            1,
+            10,
+            expiration=60*60,
+            account='dexbot-test1',
+            returnOrderId=True
+        )
+        self.strategy_base.cancel_orders(r['orderid'])
+        # self.assertListEqual(ditc_openorders,[],'order is not cancel!') 
     def test_count_asset(self):
-        pass
+        self.strategy_base.count_asset()
     def test_get_allocated_assets(self):
-        pass
+        self.strategy_base.get_allocated_assets()
     def test_get_market_buy_orders(self):
-        pass
+        self.strategy_base.get_market_buy_orders()
     def test_get_market_sell_orders(self):
-        pass
+        self.strategy_base.get_highest_market_buy_order()
     def test_get_highest_market_buy_order(self):
-        pass
+        self.strategy_base.get_highest_own_buy_order()
     def test_get_highest_own_buy_order(self):
-        pass
+        self.strategy_base.get_lowest_market_sell_order()
     def test_get_lowest_market_sell_order(self):
-        pass
+        self.strategy_base.get_lowest_own_sell_order()
     def test_get_lowest_own_sell_order(self):
-        pass
+        self.strategy_base.get_external_market_center_price()
     def test_get_external_market_center_price(self):
-        pass
+        self.strategy_base.get_market_center_price('Binance')
     def test_get_market_center_price(self):
-        pass
+        self.strategy_base.get_market_buy_price()
     def test_get_market_buy_price(self):
-        pass
+        self.strategy_base.get_market_orders()
     def test_get_market_orders(self):
-        pass
+        self.strategy_base.get_orderbook_orders()
     def test_get_orderbook_orders(self):
-        pass
+        self.strategy_base.get_market_sell_price()
     def test_get_market_sell_price(self):
-        pass
+        self.strategy_base.get_market_spread()
     def test_get_market_spread(self):
-        pass
+        self.strategy_base.get_market_spread()
     def test_get_order_cancellation_fee(self):
-        pass
+        self.strategy_base.get_order_cancellation_fee('TEST')
     def test_get_order_creation_fee(self):
-        pass
+        self.strategy_base.get_order_creation_fee('TEST')
     def test_filter_buy_orders(self):
-        pass
+        self.strategy_base.filter_buy_orders(['1223'])
     def test_filter_sell_orders(self):
-        pass
+        self.strategy_base.filter_sell_orders(['1223'])
     def test_get_own_buy_orders(self):
-        pass
+        self.strategy_base.get_own_buy_orders()
     def test_get_own_sell_orders(self):
-        pass
+        self.strategy_base.get_own_sell_orders()
     def test_get_own_spread(self):
-        pass
+        self.strategy_base.get_own_spread()
     def test_get_updated_order(self):
-        pass
+        self.strategy_base.get_updated_order(['123'])
     def test_execute(self):
-        pass
+        self.strategy_base.execute()
     def test_is_buy_order(self):
-        pass
+        self.strategy_base.is_buy_order(['123'])
     def test_is_current_market(self):
-        pass
+        self.strategy_base.is_current_market('1.3.13','1.3.14')
     def test_is_sell_order(self):
-        pass
+        self.strategy_base.is_sell_order(['123'])
     def test_pause(self):
-        pass
+        self.strategy_base.pause()
     def test_clear_all_worker_data(self):
-        pass
+        self.strategy_base.clear_all_worker_data()
     def test_place_market_buy_order(self):
-        pass
+        self.strategy_base.place_market_buy_order(1,0.1)
     def test_place_market_sell_order(self):
-        pass
+        self.strategy_base.place_market_sell_order(1,10)
     def test_retry_action(self):
-        pass
+        self.strategy_base.retry_action(action)
     def test_store_profit_estimation_data(self):
-        pass
+        self.strategy_base.store_profit_estimation_data()
     def test_get_profit_estimation_data(self):
-        pass
+        self.strategy_base.get_profit_estimation_data('ddd')
     def test_calc_profit(self):
-        pass
+        self.strategy_base.calc_profit()
     def test_write_order_log(self):
-        pass
+        self.strategy_base.write_order_log('worker 2',['23'])
     def test_account(self):
-        pass
+        self.strategy_base.account
     def test_quote_asset(self):
-        pass
+        self.strategy_base.quote_asset
     def test_all_own_orders(self):
-        pass
+        self.strategy_base.all_own_orders
     def test_get_own_orders(self):
-        pass
+        self.strategy_base.get_own_orders
     def test_market(self):
-        pass
+        self.strategy_base.market
     def test_convert_asset(self):
-        pass
+        self.strategy_base.convert_asset('TEST','USD')
     def test_convert_fee(self):
-        pass
+        self.strategy_base.convert_fee(0.001,'TEST')
     def test_get_order(self):
-        pass
+        self.strategy_base.get_order(123)
     def test_get_updated_limit_order(self):
-        pass
+        self.strategy_base.get_updated_limit_order([123])
     def test_purge_all_local_worker_data(self):
-        pass
+        self.strategy_base.purge_all_local_worker_data('worker 2')
     def test_sort_orders_by_price(self):
-        pass
+        self.strategy_base.sort_orders_by_price()
     def test_update_gui_slider(self):
-        pass
+        self.strategy_base.update_gui_slider()
     def test_update_gui_profit(self):
-        pass
+        self.strategy_base.update_gui_profit()
     def tearDown(self):
         pass
 #-------------------------test------------------
