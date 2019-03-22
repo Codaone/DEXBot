@@ -190,7 +190,7 @@ if __name__=='__main__':
         # suite.addTest(test_StrategyBase('test_cancel_orders'))
         # suite.addTest(test_StrategyBase('test_count_asset'))
         # suite.addTest(test_StrategyBase('test_get_allocated_assets'))
-        suite.addTest(test_StrategyBase('test_get_market_buy_orders'))
+        # suite.addTest(test_StrategyBase('test_get_market_buy_orders'))
         # suite.addTest(test_StrategyBase('test_get_market_sell_orders'))
         # suite.addTest(test_StrategyBase('test_get_highest_market_buy_order'))
         # suite.addTest(test_StrategyBase('test_get_highest_own_buy_order'))
