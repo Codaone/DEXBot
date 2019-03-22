@@ -21,7 +21,7 @@ class test_Strategy(unittest.TestCase):
                 'Worker 2':{
                     'account': 'bts0501',
                     'amount': 1.0,
-                    'center_price': 0.0,
+                    'center_price': 0.3,
                     'center_price_depth': 0.0,
                     'center_price_dynamic': True,
                     'center_price_offset': False,
@@ -47,7 +47,7 @@ class test_Strategy(unittest.TestCase):
         }   
         self.relative_strategy=Strategy(name='Worker 2',config=TEST_CONFIG,bitshares_instance=self.bitShares)    
         # print(self.relative_strategy.get_market_center_price())
-        print('test node:There is not one buy order in TEST/USD market! Strategy() error! market.ticker() error')
+        # print('test node:There is not one buy order in TEST/USD market! Strategy() error! market.ticker() error')
     def test_configure(self):
         cf=self.relative_strategy.configure()
         self.assertNotEqual(cf,[])
