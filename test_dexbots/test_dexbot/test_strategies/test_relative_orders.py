@@ -16,10 +16,6 @@ class test_Strategy(unittest.TestCase):
         self.account=Account('bts0207',bitshares_instance=self.bitShares)
         # self.bitShares.account='dexbot-test1'
         # self.account=Account('dexbot-test1',bitshares_instance=self.bitShares)    
-    def setUp(self):
-        from bitshares import BitShares
-        from bitshares.account import Account
-        #path='/Users/jacking/Documents/GitHub/stakemachine/config.yml'
         TEST_CONFIG = {
             'node':'wss://bts.open.icowallet.net/ws',
             'workers':{
@@ -75,13 +71,23 @@ class test_Strategy(unittest.TestCase):
                 }
             }   
         }   
+        if self.bitShares.wallet.locked():
+            self.bitShares.wallet.unlock('123')
+        self.relative_strategy=Strategy(name='bts0207',config=TEST_CONFIG,bitshares_instance=self.bitShares)    
+        for e in self.relative_strategy.__dict__.items():
+                print(e)
+    def setUp(self):
+        from bitshares import BitShares
+        from bitshares.account import Account
+        #path='/Users/jacking/Documents/GitHub/stakemachine/config.yml'
+
         # print(self.relative_strategy.get_market_center_price())
         if self.bitShares.wallet.locked():
             self.bitShares.wallet.unlock('123')
         # self.relative_strategy=Strategy(name='dexbot-test1',config=TEST_CONFIG,bitshares_instance=self.bitShares)    
         # self.assertEqual(Account('dexbot-test1',bitshares_instance=self.bitShares),self.relative_strategy.account,'error')
-        self.relative_strategy=Strategy(name='bts0207',config=TEST_CONFIG,bitshares_instance=self.bitShares)    
-        self.assertEqual(Account('bts0207',bitshares_instance=self.bitShares),self.relative_strategy.account,'error')
+        # self.relative_strategy=Strategy(name='bts0207',config=TEST_CONFIG,bitshares_instance=self.bitShares)    
+        # self.assertEqual(Account('bts0207',bitshares_instance=self.bitShares),Account(self.relative_strategy.account,bitshares_instance=self.bitShares),'error')
         # print('test node:There is not one buy order in TEST/USD market! Strategy() error! market.ticker() error')
     def test_configure(self):
         cf=Strategy.configure()
@@ -95,9 +101,13 @@ class test_Strategy(unittest.TestCase):
         self.relative_strategy.tick('d')
         print('[d] is not in use')
     def test_amount_to_sell(self):
-        print(self.relative_strategy.worker)
+        # print(self.relative_strategy.worker)
+        self.relative_strategy.sell_price=1
+        print(self.relative_strategy.sell_price)
         amount_to_sell=self.relative_strategy.amount_to_sell
+        print(amount_to_sell)
     def test_amount_to_buy(self):
+        self.relative_strategy.buy_price=1
         amount_to_buy=self.relative_strategy.amount_to_buy
         print(amount_to_buy)
     def test_calculate_order_prices(self):
@@ -123,18 +133,18 @@ class test_Strategy(unittest.TestCase):
 if __name__=='__main__':
     def suite():
         suite=unittest.TestSuite()
-        suite.addTest(test_Strategy('test_configure'))
-        suite.addTest(test_Strategy('test_configure_details'))
-        suite.addTest(test_Strategy('test_error'))
-        suite.addTest(test_Strategy('test_tick'))
+        # suite.addTest(test_Strategy('test_configure'))
+        # suite.addTest(test_Strategy('test_configure_details'))
+        # suite.addTest(test_Strategy('test_error'))
+        # suite.addTest(test_Strategy('test_tick'))
         suite.addTest(test_Strategy('test_amount_to_sell'))
         suite.addTest(test_Strategy('test_amount_to_buy'))
-        suite.addTest(test_Strategy('test_calculate_order_prices'))
-        suite.addTest(test_Strategy('test_update_orders'))
-        suite.addTest(test_Strategy('test_calculate_center_price'))
-        suite.addTest(test_Strategy('test_calculate_asset_offset'))
-        suite.addTest(test_Strategy('test_calculate_manual_offset'))
-        suite.addTest(test_Strategy('test_check_orders'))
+        # suite.addTest(test_Strategy('test_calculate_order_prices'))
+        # suite.addTest(test_Strategy('test_update_orders'))
+        # suite.addTest(test_Strategy('test_calculate_center_price'))
+        # suite.addTest(test_Strategy('test_calculate_asset_offset'))
+        # suite.addTest(test_Strategy('test_calculate_manual_offset'))
+        # suite.addTest(test_Strategy('test_check_orders'))
         return suite
     runner=unittest.TextTestRunner(verbosity=2)
     runner.run(suite())
