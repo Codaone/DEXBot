@@ -46,7 +46,7 @@ ConfigElement = collections.namedtuple('ConfigElement', 'key type default title 
 DetailElement = collections.namedtuple('DetailTab', 'type name title file')
 
 
-class BaseConfig():
+class BaseConfig:
 
     @classmethod
     def configure(cls, return_base_config=True):
