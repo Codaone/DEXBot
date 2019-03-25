@@ -1,4 +1,4 @@
-from .base_config import BaseConfig, ConfigElement, DetailElement
+from dexbot.strategies.config_parts.base_config import BaseConfig, ConfigElement, DetailElement
 
 
 class StrategyConfig(BaseConfig):

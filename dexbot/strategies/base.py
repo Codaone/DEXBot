@@ -10,7 +10,7 @@ from dexbot.statemachine import StateMachine
 from dexbot.helper import truncate
 from dexbot.strategies.external_feeds.price_feed import PriceFeed
 from dexbot.qt_queue.idle_queue import idle_add
-from .config_parts.base_config import BaseConfig
+from dexbot.strategies.config_parts.base_config import BaseConfig
 
 from events import Events
 import bitshares.exceptions
