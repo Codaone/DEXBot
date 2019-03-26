@@ -12,4 +12,17 @@
   File "/Users/jacking/Documents/GitHub/env/lib/python3.7/site-packages/dexbot-0.9.19-py3.7.egg/dexbot/strategies/relative_orders.py", line 184, in amount_to_sell
     amount * self.sell_price < 2 * 10 ** -self.market['base']['precision']):
     TypeError: unsupported operand type(s) for *: 'float' and 'NoneType'`
+6. amount=0 order size boundary test ok
+7. order size :amount=None ======================================================================
+     ERROR: setUpClass (__main__.test_Strategy) 
+    ----------------------------------------------------------------------
+    Traceback (most recent call last):
+  File "/Users/jacking/Documents/GitHub/env/DEXBot/test_dexbots/test_dexbot/test_strategies/test_relative_orders.py", line 101, in setUpClass
+    self.relative_strategy=Strategy(name='bts0207',config=TEST_CONFIG,bitshares_instance=self.bitShares)
+  File "/Users/jacking/Documents/GitHub/env/lib/python3.7/site-packages/dexbot-0.9.19-py3.7.egg/dexbot/strategies/relative_orders.py", line 113, in __init__
+    self.order_size = float(self.worker.get('amount', 1))
+    TypeError: float() argument must be a string or a number, not 'NoneType'
+8.  order size :amount=99999999 
+    Insufficient buy balance, needed 37958567.5416 CNY
+    Insufficient sell balance, needed 99999999.0 BTS
 
