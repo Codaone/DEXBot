@@ -44,9 +44,34 @@ class test_Strategy(unittest.TestCase):
                     'reset_on_price_change': False,
                     'spread': 5.0
                 },
+            # 'bts0207':{
+            #         'account': 'bts0207',
+            #         'amount': 1,
+            #         'center_price': 0.3,
+            #         'center_price_depth': 0.0,
+            #         'center_price_dynamic': True,
+            #         'center_price_offset': False,
+            #         'custom_expiration': False,
+            #         'dynamic_spread': False,
+            #         'dynamic_spread_factor': 1.0,
+            #         'expiration_time': 157680000.0,
+            #         'external_feed': False,
+            #         'external_price_source': 'null',
+            #         'fee_asset': 'BTS',
+            #         'manual_offset': 0.0,
+            #         'market': 'BTS/CNY',
+            #         'market_depth_amount': 0.0,
+            #         'module': 'dexbot.strategies.relative_orders',
+            #         'partial_fill_threshold': 30.0,
+            #         'price_change_threshold': 2.0,
+            #         'relative_order_size': False,
+            #         'reset_on_partial_fill': True,
+            #         'reset_on_price_change': False,
+            #         'spread': 5.0
+            #     }
             'bts0207':{
                     'account': 'bts0207',
-                    'amount': 1,
+                    'amount': 99999999,#order size:1.amount=0 ok.2.amount=None error
                     'center_price': 0.3,
                     'center_price_depth': 0.0,
                     'center_price_dynamic': True,
@@ -74,8 +99,8 @@ class test_Strategy(unittest.TestCase):
         if self.bitShares.wallet.locked():
             self.bitShares.wallet.unlock('123')
         self.relative_strategy=Strategy(name='bts0207',config=TEST_CONFIG,bitshares_instance=self.bitShares)    
-        for e in self.relative_strategy.__dict__.items():
-                print(e)
+        # for e in self.relative_strategy.__dict__.items():
+        #         print(e)
     def setUp(self):
         from bitshares import BitShares
         from bitshares.account import Account
@@ -133,18 +158,18 @@ class test_Strategy(unittest.TestCase):
 if __name__=='__main__':
     def suite():
         suite=unittest.TestSuite()
-        # suite.addTest(test_Strategy('test_configure'))
-        # suite.addTest(test_Strategy('test_configure_details'))
-        # suite.addTest(test_Strategy('test_error'))
-        # suite.addTest(test_Strategy('test_tick'))
+        suite.addTest(test_Strategy('test_configure'))
+        suite.addTest(test_Strategy('test_configure_details'))
+        suite.addTest(test_Strategy('test_error'))
+        suite.addTest(test_Strategy('test_tick'))
         suite.addTest(test_Strategy('test_amount_to_sell'))
         suite.addTest(test_Strategy('test_amount_to_buy'))
-        # suite.addTest(test_Strategy('test_calculate_order_prices'))
-        # suite.addTest(test_Strategy('test_update_orders'))
-        # suite.addTest(test_Strategy('test_calculate_center_price'))
-        # suite.addTest(test_Strategy('test_calculate_asset_offset'))
-        # suite.addTest(test_Strategy('test_calculate_manual_offset'))
-        # suite.addTest(test_Strategy('test_check_orders'))
+        suite.addTest(test_Strategy('test_calculate_order_prices'))
+        suite.addTest(test_Strategy('test_update_orders'))
+        suite.addTest(test_Strategy('test_calculate_center_price'))
+        suite.addTest(test_Strategy('test_calculate_asset_offset'))
+        suite.addTest(test_Strategy('test_calculate_manual_offset'))
+        suite.addTest(test_Strategy('test_check_orders'))
         return suite
     runner=unittest.TextTestRunner(verbosity=2)
     runner.run(suite())
