@@ -133,58 +133,68 @@ class test_Strategy(unittest.TestCase):
         print('[d] is not in use')
     def test_amount_to_sell(self):
         # print(self.relative_strategy.worker)
-        amount=1
-        c=self.relative_strategy.market['quote']
-        d=self.relative_strategy.market['quote']['precision']
+        # amount=1
+        # c=self.relative_strategy.market['quote']
+        # d=self.relative_strategy.market['quote']['precision']
         self.relative_strategy.sell_price=1
-        print(10 ** -5)
+        # print(10 ** -5)
         # print(c,d)
+        # from bitshares.asset import Asset
+        # aa=Asset('1.3.0')
+        # print(aa.symbol)
+        # print(dict(aa))
+        # print(aa.settlements)
         # if (amount < 2 * 10 ** -d or
         #         amount * self.sell_price < 2 * 10 ** -d):
         #     amount = 0
         
-        # print(self.relative_strategy.sell_price)
-        # amount_to_sell=self.relative_strategy.amount_to_sell
-        # print(amount_to_sell)
+        print(self.relative_strategy.sell_price)
+        amount_to_sell=self.relative_strategy.amount_to_sell
+        print(amount_to_sell)
     def test_amount_to_buy(self):
         self.relative_strategy.buy_price=1
         amount_to_buy=self.relative_strategy.amount_to_buy
         print(amount_to_buy)
     def test_calculate_order_prices(self):
         calculate_order_prices=self.relative_strategy.calculate_order_prices()
-        print(calculate_order_prices)
+        # print(calculate_order_prices)
+        self.assertEqual(None,calculate_order_prices)
     def test_update_orders(self):
-        self.relative_strategy.update_orders()
+        r=self.relative_strategy.update_orders()
+        self.assertEqual(None,r)
     def test_calculate_center_price(self):
         center_price = self.relative_strategy.calculate_center_price()
         self.assertIsNotNone(center_price,'error!')
-        print(center_price)
+        # print(center_price)
     def test_calculate_asset_offset(self):
-        calculate_asset_offset=self.relative_strategy.calculate_asset_offset(center_price=0,order_ids=[],spread=0.5)
-        print(calculate_asset_offset)
+        calculate_asset_offset=self.relative_strategy.calculate_asset_offset(center_price=1,order_ids=[],spread=0.5)
+        # print(calculate_asset_offset)
+        self.assertIsNotNone(calculate_asset_offset)
     def test_calculate_manual_offset(self):
         calculate_manual_offset=self.relative_strategy.calculate_manual_offset(center_price=0,manual_offset=0.1)
-        print(calculate_manual_offset)
+        # print(calculate_manual_offset)
+        self.assertIsNotNone(calculate_manual_offset)
     def test_check_orders(self):
-        self.relative_strategy.check_orders()
+        r=self.relative_strategy.check_orders()
+        self.assertIsNone(r)
     def tearDown(self):
         pass
 #-------------------------test------------------
 if __name__=='__main__':
     def suite():
         suite=unittest.TestSuite()
-        # suite.addTest(test_Strategy('test_configure'))
-        # suite.addTest(test_Strategy('test_configure_details'))
-        # suite.addTest(test_Strategy('test_error'))
-        # suite.addTest(test_Strategy('test_tick'))
+        suite.addTest(test_Strategy('test_configure'))
+        suite.addTest(test_Strategy('test_configure_details'))
+        suite.addTest(test_Strategy('test_error'))
+        suite.addTest(test_Strategy('test_tick'))
         suite.addTest(test_Strategy('test_amount_to_sell'))
-        # suite.addTest(test_Strategy('test_amount_to_buy'))
-        # suite.addTest(test_Strategy('test_calculate_order_prices'))
-        # suite.addTest(test_Strategy('test_update_orders'))
-        # suite.addTest(test_Strategy('test_calculate_center_price'))
-        # suite.addTest(test_Strategy('test_calculate_asset_offset'))
-        # suite.addTest(test_Strategy('test_calculate_manual_offset'))
-        # suite.addTest(test_Strategy('test_check_orders'))
+        suite.addTest(test_Strategy('test_amount_to_buy'))
+        suite.addTest(test_Strategy('test_calculate_order_prices'))
+        suite.addTest(test_Strategy('test_update_orders'))
+        suite.addTest(test_Strategy('test_calculate_center_price'))
+        suite.addTest(test_Strategy('test_calculate_asset_offset'))
+        suite.addTest(test_Strategy('test_calculate_manual_offset'))
+        suite.addTest(test_Strategy('test_check_orders'))
         return suite
     runner=unittest.TextTestRunner(verbosity=2)
     runner.run(suite())
