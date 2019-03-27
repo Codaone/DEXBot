@@ -1,4 +1,4 @@
-#relative_orders
+# relative_orders
 1. When there is no order in the test node because there is no order in the market, Market. ticker () will make a mistake and the program will not catch it.Market. ticker ()，Many methods are used, like initialization methods.
 2. When center_price is None, the program does not catch it.unsupported operand type(s) for /: 'NoneType' and 'float'
 3. When the balance of base assets in an account is zero, an error is prompted:Insufficient buy balance, needed 0.3442 CNY
@@ -25,4 +25,39 @@
 8.  order size :amount=99999999 
     Insufficient buy balance, needed 37958567.5416 CNY
     Insufficient sell balance, needed 99999999.0 BTS
+9. center_price:0 ok
+10. center_price:None ok
+11. center_price:99999999 ok
+12. center_price_depth:0 ok
+13. 'center_price_depth': None ======================================================================
+    ERROR: test_calculate_order_prices (__main__.test_Strategy)
+    ----------------------------------------------------------------------
+    Traceback (most recent call last):
+  File "/Users/jacking/Documents/GitHub/env/DEXBot/test_dexbots/test_dexbot/test_strategies/test_relative_orders.py", line 139, in test_calculate_order_prices
+    calculate_order_prices=self.relative_strategy.calculate_order_prices()
+  File "/Users/jacking/Documents/GitHub/env/lib/python3.7/site-packages/dexbot-0.9.19-py3.7.egg/dexbot/strategies/relative_orders.py", line 220, in calculate_order_prices
+    if self.center_price_depth > 0 and not self.external_feed:
+    TypeError: '>' not supported between instances of 'NoneType' and 'int'
 
+    ======================================================================
+    ERROR: test_update_orders (__main__.test_Strategy)
+    ----------------------------------------------------------------------
+    Traceback (most recent call last):
+  File "/Users/jacking/Documents/GitHub/env/DEXBot/test_dexbots/test_dexbot/test_strategies/test_relative_orders.py", line 142, in test_update_orders
+    self.relative_strategy.update_orders()
+  File "/Users/jacking/Documents/GitHub/env/lib/python3.7/site-packages/dexbot-0.9.19-py3.7.egg/dexbot/strategies/relative_orders.py", line 252, in update_orders
+    self.calculate_order_prices()
+  File "/Users/jacking/Documents/GitHub/env/lib/python3.7/site-packages/dexbot-0.9.19-py3.7.egg/dexbot/strategies/relative_orders.py", line 220, in calculate_order_prices
+    if self.center_price_depth > 0 and not self.external_feed:
+    TypeError: '>' not supported between instances of 'NoneType' and 'int'
+14. center_price_depth:999999999 ok
+15. center_price_dynamic: true ======================================================================
+    ERROR: setUpClass (__main__.test_Strategy)
+    ----------------------------------------------------------------------
+    Traceback (most recent call last):
+  File "/Users/jacking/Documents/GitHub/env/DEXBot/test_dexbots/test_dexbot/test_strategies/test_relative_orders.py", line 77, in setUpClass
+    'center_price_dynamic': true,
+    NameError: name 'true' is not defined
+16. center_price_dynamic: None ok this should error  
+17. center_price_dynamic:9999 ok 
+18. 
