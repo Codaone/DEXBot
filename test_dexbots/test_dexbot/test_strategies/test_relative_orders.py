@@ -44,34 +44,9 @@ class test_Strategy(unittest.TestCase):
                     'reset_on_price_change': False,
                     'spread': 5.0
                 },
-            # 'bts0207':{
-            #         'account': 'bts0207',
-            #         'amount': 1,
-            #         'center_price': 0.3,
-            #         'center_price_depth': 0.0,
-            #         'center_price_dynamic': True,
-            #         'center_price_offset': False,
-            #         'custom_expiration': False,
-            #         'dynamic_spread': False,
-            #         'dynamic_spread_factor': 1.0,
-            #         'expiration_time': 157680000.0,
-            #         'external_feed': False,
-            #         'external_price_source': 'null',
-            #         'fee_asset': 'BTS',
-            #         'manual_offset': 0.0,
-            #         'market': 'BTS/CNY',
-            #         'market_depth_amount': 0.0,
-            #         'module': 'dexbot.strategies.relative_orders',
-            #         'partial_fill_threshold': 30.0,
-            #         'price_change_threshold': 2.0,
-            #         'relative_order_size': False,
-            #         'reset_on_partial_fill': True,
-            #         'reset_on_price_change': False,
-            #         'spread': 5.0
-            #     }
             'bts0207':{
                     'account': 'bts0207',
-                    'amount': 99999999,#order size:1.amount=0 ok.2.amount=None error
+                    'amount': 1,
                     'center_price': 0.3,
                     'center_price_depth': 0.0,
                     'center_price_dynamic': True,
@@ -94,6 +69,31 @@ class test_Strategy(unittest.TestCase):
                     'reset_on_price_change': False,
                     'spread': 5.0
                 }
+            # 'bts0207':{
+            #         'account': 'bts0207',
+            #         'amount': 1,#order size:1.amount=0 ok.2.amount=None error 3.amount=9999999 error
+            #         'center_price': 0,#
+            #         'center_price_depth': 0,
+            #         'center_price_dynamic': True,
+            #         'center_price_offset': True,
+            #         'custom_expiration': False,
+            #         'dynamic_spread': False,
+            #         'dynamic_spread_factor': 0,
+            #         'expiration_time': 157680000.0,
+            #         'external_feed': False,
+            #         'external_price_source': 'null',
+            #         'fee_asset': 'BTS',
+            #         'manual_offset': 0.0,
+            #         'market': 'BTS/CNY',
+            #         'market_depth_amount': 0.0,
+            #         'module': 'dexbot.strategies.relative_orders',
+            #         'partial_fill_threshold': 30.0,
+            #         'price_change_threshold': 2.0,
+            #         'relative_order_size': False,
+            #         'reset_on_partial_fill': True,
+            #         'reset_on_price_change': False,
+            #         'spread': 5.0
+            #     }
             }   
         }   
         if self.bitShares.wallet.locked():
@@ -102,8 +102,8 @@ class test_Strategy(unittest.TestCase):
         # for e in self.relative_strategy.__dict__.items():
         #         print(e)
     def setUp(self):
-        from bitshares import BitShares
-        from bitshares.account import Account
+        # from bitshares import BitShares
+        # from bitshares.account import Account
         #path='/Users/jacking/Documents/GitHub/stakemachine/config.yml'
 
         # print(self.relative_strategy.get_market_center_price())
@@ -115,22 +115,37 @@ class test_Strategy(unittest.TestCase):
         # self.assertEqual(Account('bts0207',bitshares_instance=self.bitShares),Account(self.relative_strategy.account,bitshares_instance=self.bitShares),'error')
         # print('test node:There is not one buy order in TEST/USD market! Strategy() error! market.ticker() error')
     def test_configure(self):
+        from dexbot.strategies.base import ConfigElement
+        account=ConfigElement(key='account', type='string', default='', title='Account', description='BitShares account name for the bot to operate with', extra='')
         cf=Strategy.configure()
-        self.assertEqual(1,1,cf) #out put configure info
+        self.assertIn(account,cf)
     def test_configure_details(self):
+        # from dexbot.strategies.base import DetailElement
         cf_details=Strategy.configure_details()
-        self.assertEqual(1,1, cf_details)
+        # print(cf_details)
+        self.assertEqual(cf_details,[])
     def test_error(self):
-        self.relative_strategy.error()
+        r=self.relative_strategy.error()
+        self.assertEqual(None,r)
     def test_tick(self):
-        self.relative_strategy.tick('d')
+        r=self.relative_strategy.tick('d')
+        self.assertEqual(None,r)
         print('[d] is not in use')
     def test_amount_to_sell(self):
         # print(self.relative_strategy.worker)
+        amount=1
+        c=self.relative_strategy.market['quote']
+        d=self.relative_strategy.market['quote']['precision']
         self.relative_strategy.sell_price=1
-        print(self.relative_strategy.sell_price)
-        amount_to_sell=self.relative_strategy.amount_to_sell
-        print(amount_to_sell)
+        print(10 ** -5)
+        # print(c,d)
+        # if (amount < 2 * 10 ** -d or
+        #         amount * self.sell_price < 2 * 10 ** -d):
+        #     amount = 0
+        
+        # print(self.relative_strategy.sell_price)
+        # amount_to_sell=self.relative_strategy.amount_to_sell
+        # print(amount_to_sell)
     def test_amount_to_buy(self):
         self.relative_strategy.buy_price=1
         amount_to_buy=self.relative_strategy.amount_to_buy
@@ -158,18 +173,18 @@ class test_Strategy(unittest.TestCase):
 if __name__=='__main__':
     def suite():
         suite=unittest.TestSuite()
-        suite.addTest(test_Strategy('test_configure'))
-        suite.addTest(test_Strategy('test_configure_details'))
-        suite.addTest(test_Strategy('test_error'))
-        suite.addTest(test_Strategy('test_tick'))
+        # suite.addTest(test_Strategy('test_configure'))
+        # suite.addTest(test_Strategy('test_configure_details'))
+        # suite.addTest(test_Strategy('test_error'))
+        # suite.addTest(test_Strategy('test_tick'))
         suite.addTest(test_Strategy('test_amount_to_sell'))
-        suite.addTest(test_Strategy('test_amount_to_buy'))
-        suite.addTest(test_Strategy('test_calculate_order_prices'))
-        suite.addTest(test_Strategy('test_update_orders'))
-        suite.addTest(test_Strategy('test_calculate_center_price'))
-        suite.addTest(test_Strategy('test_calculate_asset_offset'))
-        suite.addTest(test_Strategy('test_calculate_manual_offset'))
-        suite.addTest(test_Strategy('test_check_orders'))
+        # suite.addTest(test_Strategy('test_amount_to_buy'))
+        # suite.addTest(test_Strategy('test_calculate_order_prices'))
+        # suite.addTest(test_Strategy('test_update_orders'))
+        # suite.addTest(test_Strategy('test_calculate_center_price'))
+        # suite.addTest(test_Strategy('test_calculate_asset_offset'))
+        # suite.addTest(test_Strategy('test_calculate_manual_offset'))
+        # suite.addTest(test_Strategy('test_check_orders'))
         return suite
     runner=unittest.TextTestRunner(verbosity=2)
     runner.run(suite())
