@@ -115,7 +115,7 @@ class test_Strategy(unittest.TestCase):
         # self.assertEqual(Account('bts0207',bitshares_instance=self.bitShares),Account(self.relative_strategy.account,bitshares_instance=self.bitShares),'error')
         # print('test node:There is not one buy order in TEST/USD market! Strategy() error! market.ticker() error')
     def test_configure(self):
-        from dexbot.strategies.base import ConfigElement
+        from dexbot.strategies.config_parts.relative_config import ConfigElement
         account=ConfigElement(key='account', type='string', default='', title='Account', description='BitShares account name for the bot to operate with', extra='')
         cf=Strategy.configure()
         self.assertIn(account,cf)
