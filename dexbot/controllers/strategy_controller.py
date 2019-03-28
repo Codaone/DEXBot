@@ -181,7 +181,11 @@ class RelativeOrdersController(StrategyController):
         else:
             self.view.strategy_widget.center_price_input.setDisabled(False)
             self.view.strategy_widget.center_price_depth_input.setDisabled(True)
+
+            # Disable and uncheck reset_on_price_change
             self.view.strategy_widget.reset_on_price_change_input.setDisabled(True)
+            self.view.strategy_widget.reset_on_price_change_input.setChecked(False)
+
             self.view.strategy_widget.price_change_threshold_input.setDisabled(True)
             self.view.strategy_widget.external_feed_input.setChecked(False)
             self.view.strategy_widget.external_feed_input.setDisabled(True)

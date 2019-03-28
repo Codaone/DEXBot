@@ -22,7 +22,7 @@ from . import helper
 # We need to do this before importing click
 if "LANG" not in os.environ:
     os.environ['LANG'] = 'C.UTF-8'
-import click
+import click  # noqa: E402
 
 
 log = logging.getLogger(__name__)
@@ -46,6 +46,12 @@ initialize_data_folders()
     default=DEFAULT_CONFIG_FILE,
 )
 @click.option(
+    '--logfile',
+    default=None,
+    type=click.Path(dir_okay=False, writable=True),
+    help='Override logfile location (example: ~/dexbot.log)'
+)
+@click.option(
     '--verbose',
     '-v',
     type=int,
@@ -59,7 +65,7 @@ initialize_data_folders()
 @click.option(
     '--pidfile',
     '-p',
-    type=str,
+    type=click.Path(dir_okay=False, writable=True),
     default='',
     help='File to write PID')
 @click.pass_context
@@ -89,11 +95,12 @@ def run(ctx):
         signal.signal(signal.SIGTERM, kill_workers)
         signal.signal(signal.SIGINT, kill_workers)
         try:
-            # These signals are UNIX-only territory, will ValueError here on Windows
+            # These signals are UNIX-only territory, will ValueError or AttributeError here on Windows (depending on
+            # python version)
             signal.signal(signal.SIGHUP, kill_workers)
             # TODO: reload config on SIGUSR1
             # signal.signal(signal.SIGUSR1, lambda x, y: worker.do_next_tick(worker.reread_config))
-        except ValueError:
+        except (ValueError, AttributeError):
             log.debug("Cannot set all signals -- not available on this platform")
         if ctx.obj['systemd']:
             try:
@@ -127,6 +134,7 @@ def runservice(ctx):
 
     click.echo("Starting dexbot daemon")
     os.system("systemctl --user start dexbot")
+
 
 @main.command()
 @click.pass_context

@@ -1,4 +1,5 @@
 import os
+import os.path
 import sys
 import logging
 import logging.config
@@ -8,6 +9,7 @@ import click
 from ruamel import yaml
 from bitshares import BitShares
 from bitshares.instance import set_shared_bitshares_instance
+from bitshares.exceptions import WrongMasterPasswordException
 
 from dexbot.config import Config
 
@@ -43,7 +45,11 @@ def verbose(f):
         logger.addHandler(ch)
 
         # Logging to a file
-        fh = logging.FileHandler('dexbot.log')
+        filename = ctx.obj.get('logfile')
+        if not filename:
+            # By default, log to a file located where the script is
+            filename = os.path.join(os.path.dirname(sys.argv[0]), 'dexbot.log')
+        fh = logging.FileHandler(filename)
         fh.setFormatter(formatter2)
         logger.addHandler(fh)
 
@@ -103,13 +109,17 @@ def unlock(f):
                         sys.exit(78)  # 'configuration error' in sysexits.h
                     pwd = click.prompt(
                         "Current Uptick Wallet Passphrase", hide_input=True)
-                ctx.bitshares.wallet.unlock(pwd)
+                try:
+                    ctx.bitshares.wallet.unlock(pwd)
+                except WrongMasterPasswordException:
+                    log.critical("Password error, exiting")
+                    sys.exit(78)
             else:
                 if systemd:
                     # No user available to interact with
                     log.critical("Uptick Wallet not installed, cannot run")
                     sys.exit(78)
-                click.echo("No Uptick wallet installed yet. \n" + 
+                click.echo("No Uptick wallet installed yet. \n" +
                            "This is a password for encrypting " +
                            "the file that contains your private keys.  Creating ...")
                 pwd = click.prompt(

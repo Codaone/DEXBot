@@ -96,10 +96,10 @@ class Whiptail:
     def checklist(self, msg='', items=(), prefix=' - '):
         return self.showlist('checklist', msg, items, prefix)
 
-    def view_text(self, text):
+    def view_text(self, text, **kwargs):
         """Whiptail wants a file but we want to provide a text string"""
         fd, nam = tempfile.mkstemp()
-        f = os.fdopen(fd)
+        f = os.fdopen(fd, 'w')
         f.write(text)
         f.close()
         self.view_file(nam)
@@ -131,9 +131,12 @@ class NoWhiptail:
             "] " + msg
         )
 
-    def view_text(self, text):
-        click.echo_via_pager(text)
-        
+    def view_text(self, text, pager=True):
+        if pager:
+            click.echo_via_pager(text)
+        else:
+            click.echo(text)
+
     def menu(self, msg='', items=(), default=0):
         click.echo(msg + '\n')
         if isinstance(items, dict):
@@ -155,6 +158,11 @@ class NoWhiptail:
                 default = d
             d += 1
         return self.menu(msg, [(k, v) for k, v, s in items], default=default)
+
+    def node_radiolist(self, *args, **kwargs):
+        """ Proxy stub to maintain compatibility with Whiptail class
+        """
+        return self.radiolist(*args, **kwargs)
 
     def clear(self):
         pass  # Don't tidy the screen
