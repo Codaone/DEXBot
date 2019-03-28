@@ -16,7 +16,8 @@ class StrategyFormWidget(QtWidgets.QWidget):
             importlib.import_module(strategy_module),
             'Strategy'
         )
-        configure = strategy_class.configure(False)
+        # For strategies uses autogeneration, we need the strategy configs without the defaults
+        configure = strategy_class.configure(return_base_config=False)
         form_module = controller.strategies[strategy_module].get('form_module')
         try:
             widget = getattr(
