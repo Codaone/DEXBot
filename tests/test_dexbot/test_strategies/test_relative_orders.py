@@ -191,5 +191,3 @@ class Test_Strategy:
 if __name__=='__main__':
     path='/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/test_strategies/'
     pytest.main([path+'test_relative_orders.py'])
-    # pytest.main(['/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/test_strategies/test_relative_orders.py'])
-   
