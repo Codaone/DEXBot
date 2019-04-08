@@ -1,14 +1,15 @@
 [
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_configure",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_configure_details",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_error",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_tick",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_amount_to_sell",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_amount_to_buy",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_calculate_order_prices",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_update_orders",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_calculate_center_price",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_calculate_asset_offset",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_calculate_manual_offset",
-  "tests/test_dexbot/test_strategies/test_relative_orders.py::Test_Strategy::test_check_orders"
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_print",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_configure",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_configure_details",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_error",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_tick",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_amount_to_sell",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_amount_to_buy",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_order_prices",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_update_orders",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_center_price",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_asset_offset",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_manual_offset",
+  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_check_orders"
 ]
