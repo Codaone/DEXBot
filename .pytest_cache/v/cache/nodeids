@@ -1,15 +1,13 @@
 [
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_print",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_configure",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_configure_details",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_error",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_tick",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_amount_to_sell",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_amount_to_buy",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_order_prices",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_update_orders",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_center_price",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_asset_offset",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_manual_offset",
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_check_orders"
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_init_workers",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_update_notify",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_on_block",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_on_market",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_on_account",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_add_worker",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_remove_worker",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_remove_market",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_remove_offline_worker",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_remove_offline_worker_data",
+  "tests/test_dexbot/test_worker.py::Test_Worker::test_do_next_tick"
 ]
