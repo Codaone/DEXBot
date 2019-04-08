@@ -85,4 +85,4 @@ if __name__=='__main__':
     # notify.listen()
     cur_dir=os.path.dirname(__file__)
     # path='/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/'
-    pytest.main([cur_dir+'/test_relative_orders.py'])
+    pytest.main(['--capture=no',cur_dir+'/test_relative_orders.py'])
