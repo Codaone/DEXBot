@@ -1,9 +1,0 @@
-{
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_center_price": true,
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_calculate_order_prices": true,
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_check_orders": true,
-  "tests/test_dexbot/test_relative_orders.py::Test_Strategy::test_update_orders": true,
-  "tests/test_dexbot/test_worker.py::Test_Worker::test_add_worker": true,
-  "tests/test_dexbot/test_worker.py::Test_Worker::test_run": true,
-  "tests/test_dexbot/test_worker.py::Test_Worker::test_stop": true
-}
