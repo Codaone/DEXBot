@@ -73,16 +73,5 @@ class Test_Strategy:
 
 #--------------------------test------------------------
 if __name__=='__main__':
-    # a=Test_Strategy()
-    # notify=Notify(
-    #     markets=['BTS:CNY'],
-    #     accounts=['BTS0207'],
-    #     on_market=a.test_tick,
-    #     # on_account=self.on_account,
-    #     # on_block=self.on_block,
-    #     # bitshares_instance=self.bitshares
-    # )
-    # notify.listen()
     cur_dir=os.path.dirname(__file__)
-    # path='/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/'
     pytest.main(['--capture=no',cur_dir+'/test_relative_orders.py'])
