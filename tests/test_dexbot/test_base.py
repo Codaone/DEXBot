@@ -1,50 +1,14 @@
 import pytest
 from dexbot.strategies.base import StrategyBase
 import logging
+from fixtures import fixture_data
+import os
 logging.basicConfig(format='%(asctime)s %(funcName)s %(lineno)d  : %(message)s',
                     level=logging.WARNING)
 class Test_StrategyBase:
     def setup_class(self):
-        TEST_CONFIG = {
-            'node':'wss://bts.open.icowallet.net/ws',
-            'workers':{
-                'bts0207':{
-                    'account': 'bts0207',
-                    'amount': 1,
-                    'center_price': 0.3,
-                    'center_price_depth': 0.0,
-                    'center_price_dynamic': True,
-                    'center_price_offset': False,
-                    'custom_expiration': False,
-                    'dynamic_spread': False,
-                    'dynamic_spread_factor': 1.0,
-                    'expiration_time': 157680000.0,
-                    'external_feed': False,
-                    'external_price_source': 'null',
-                    'fee_asset': 'BTS',
-                    'manual_offset': 0.0,
-                    'market': 'BTS/CNY',
-                    'market_depth_amount': 0.0,
-                    'module': 'dexbot.strategies.relative_orders',
-                    'partial_fill_threshold': 30.0,
-                    'price_change_threshold': 2.0,
-                    'relative_order_size': False,
-                    'reset_on_partial_fill': True,
-                    'reset_on_price_change': False,
-                    'spread': 5.0
-                }
-            }
-        } 
-        from bitshares import BitShares
-        nodeList=["wss://bts.open.icowallet.net/ws",
-                "wss://bitshares.dacplay.org/ws",
-                "wss://ws.gdex.top",
-                "wss://api.bts.ai"
-                ]
-        self.bitShares = BitShares(nodeList)#,nobroadcast=True)
-        if self.bitShares.wallet.locked():
-            self.bitShares.wallet.unlock('123')
-        self.strategy_base=StrategyBase(name='bts0207',config=TEST_CONFIG,bitshares_instance=self.bitShares) 
+        TEST_CONFIG=fixture_data()
+        self.strategy_base=StrategyBase(name='worker 1',config=TEST_CONFIG)
     def teardown_class(self):
         pass
     def setup_method(self):
@@ -52,9 +16,10 @@ class Test_StrategyBase:
     def teardown_method(self):
         pass
     def test_configure(self):
-        from dexbot.strategies.config_parts.base_config import ConfigElement
+        # from dexbot.strategies.config_parts.base_config import ConfigElement
         base_config=StrategyBase.configure()
-        logging.warning(base_config)
+        logging.info(base_config)
+        # assert  isinstance(base_config,ConfigElement)
     # def test_configure_details(self):
     #     config_details=StrategyBase.configure_details()
     #     for e in config_details:
@@ -216,5 +181,5 @@ class Test_StrategyBase:
     #     pass
 #-------------------------test------------------
 if __name__=='__main__':
-    path='/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/test_strategies/'
-    pytest.main([path+'test_base.py'])
+    cur_dir=os.path.dirname(__file__)
+    pytest.main(['--capture=no',cur_dir+'/test_base.py'])
