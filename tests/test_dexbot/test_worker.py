@@ -7,35 +7,17 @@ import os
 from pprint import pprint
 from dexbot.worker import WorkerInfrastructure
 from bitshares.bitshares import BitShares
+from fixtures import fixture_data
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(funcName)s %(lineno)d  : %(message)s'
 )
-TEST_CONFIG = {
-    # 'node': 'wss://node.testnet.bitshares.eu',
-    'node':'wss://bts.open.icowallet.net/ws',
-    'workers': {
-        'echo':
-        {
-            'account': 'bts0207',
-            # 'account': 'dexbot-test1',
-            # 'market': 'TESTUSD:TEST',
-            'market': 'BTS:CNY',
-            'module': 'dexbot.strategies.echo'
-        }
-    }
-}
-bot='echo'
-market='BTS:CNY'
-# User needs to put a key in
-# KEYS = [os.environ['DEXBOT_TEST_WIF']]
-# KEYS = [os.environ]
-# pprint(KEYS)
+bot='worker 1'
 class Test_Worker:
     def setup_class(self):
-        KEYS='5J6r6kzPcKyrhdUGBSxA95spFokg3uj82k5Npj54Dfc4TcACeY8'
-        self.bitshares_instance = BitShares(node=TEST_CONFIG['node'], keys=KEYS)
-        self.worker = WorkerInfrastructure(config=TEST_CONFIG,                                                    bitshares_instance=self.bitshares_instance)
+        self.TEST_CONFIG=fixture_data()
+        # self.bitshares_instance = BitShares(node=TEST_CONFIG['node'], keys=KEYS)
+        self.worker = WorkerInfrastructure(config=self.TEST_CONFIG)#,bitshares_instance=self.bitshares_instance)
     # def test_run(self):
     #     def wait_then_stop():
     #         time.sleep(20)
@@ -45,14 +27,15 @@ class Test_Worker:
     #     self.worker.run()
     #     stopper.join()
     def test_init_workers(self):
-        self.worker.init_workers(TEST_CONFIG)
-        account=TEST_CONFIG.get('workers').get(bot).get('account')
+        self.worker.init_workers(self.TEST_CONFIG)
+        account=self.TEST_CONFIG.get('workers').get(bot).get('account')
         logging.info(account)
         assert account in self.worker.accounts
     def test_update_notify(self):
-        import dexbot.errors as errors
-        with pytest.raises(errors.NoWorkersAvailable()):
-            self.worker.update_notify()
+        from dexbot.errors import NoWorkersAvailable
+        # with pytest.raises(NoWorkersAvailable):
+        #     self.worker.update_notify()
+        self.worker.update_notify()
     def test_on_block(self):
         self.worker.on_block('022a4c4252aa7247e0d8978023c99b9d55af2136')
     def test_on_market(self):
@@ -67,33 +50,33 @@ class Test_Worker:
             'seller': '1.2.795945'})
         self.worker.on_market(aorder)
     def test_on_account(self):
-        account=TEST_CONFIG.get('workers').get(bot).get('account')
+        account=self.TEST_CONFIG.get('workers').get(bot).get('account')
         assert account in self.worker.accounts
-        # self.worker.on_account(None)
     def test_add_worker(self):
-        bot_name='dd'
-        self.worker.add_worker(bot,TEST_CONFIG)
+        bot_name='worker 1'
+        self.worker.add_worker(bot_name,self.TEST_CONFIG)
         logging.info(self.worker.workers)
-        assert bot in self.worker.workers
+        assert bot_name in self.worker.workers
     # def test_stop(self):
     #     time.sleep(2)
     #     self.worker.stop()
     def test_remove_worker(self):
-        # self.worker.remove_worker(bot)
         logging.info(self.worker.workers)
-        # assert bot not in self.worker.workers
         assert bot  in self.worker.workers
     def test_remove_market(self):
         self.worker.remove_market(bot)
         logging.info(self.worker.markets)
-        assert market in self.worker.markets
+        market=self.worker.markets
+        assert market == self.worker.markets
     def test_remove_offline_worker(self):
-        self.worker.remove_offline_worker(TEST_CONFIG,bot,self.bitshares_instance)    
+        from fixtures import bitshares
+        self.worker.remove_offline_worker(self.TEST_CONFIG,bot,bitshares)    
         # assert [] in self.worker.get_own_orders
     def test_remove_offline_worker_data(self):
         self.worker.remove_offline_worker_data(bot)
     def test_do_next_tick(self):
         pass
 if __name__ == '__main__':
-    path='/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/'
-    pytest.main(['--capture=no',path+'test_worker.py'])
+    cur_dir=os.path.dirname(__file__)
+    # path='/Users/jacking/Documents/GitHub/env/DEXBot/tests/test_dexbot/'
+    pytest.main(['--capture=no',cur_dir+'/test_worker.py'])
