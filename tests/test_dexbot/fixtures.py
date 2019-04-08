@@ -17,11 +17,6 @@ wifs = [
 bitshares = BitShares(
     "wss://node.bitshares.eu", keys=wifs, nobroadcast=True, num_retries=1
 )
-# bitshares = BitShares(
-#     'wss://bts.open.icowallet.net/ws', keys=wifs, nobroadcast=True, num_retries=1
-# )
-# config = bitshares.config
-
 # Set defaults
 bitshares.set_default_account("init0")
 set_shared_blockchain_instance(bitshares)
@@ -34,8 +29,6 @@ def fixture_data():
     # Clear tx buffer
     bitshares.clear()
 
-    # with open(os.path.join(os.path.dirname(__file__), "fixtures.yaml")) as fid:
-    #     data = yaml.safe_load(fid)
     TEST_CONFIG = {
             'node':'wss://node.bitshares.eu',
             'workers':{
