@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
-import yaml
-
 from pprint import pprint
 
-from bitshares import BitShares, storage
+from bitshares import BitShares
 from bitshares.instance import set_shared_blockchain_instance
 
 # default wifs key for testing
@@ -30,9 +27,9 @@ def fixture_data():
     bitshares.clear()
 
     TEST_CONFIG = {
-            'node':'wss://node.bitshares.eu',
-            'workers':{
-                'worker 1':{
+        'node': 'wss://node.bitshares.eu',
+        'workers': {
+                'worker 1': {
                     'account': 'init0',
                     'amount': 1.0,
                     'center_price': 0.3,
@@ -57,9 +54,10 @@ def fixture_data():
                     'reset_on_price_change': False,
                     'spread': 5.0
                 }
-            }
         }
+    }
     return TEST_CONFIG
+
 
 if __name__ == '__main__':
     pprint(fixture_data())
