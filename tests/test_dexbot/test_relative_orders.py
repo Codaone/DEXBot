@@ -14,9 +14,6 @@ class Test_Strategy:
         TEST_CONFIG = fixture_data()
         self.relative_strategy = Strategy(name='worker 1', config=TEST_CONFIG)
 
-    def test_print(self):
-        logging.warning('asdfasdfasdf')
-
     def teardown_class(self):
         pass
 
