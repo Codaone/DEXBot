@@ -47,7 +47,7 @@ def fixture_data():
                     'external_price_source': 'null',
                     'fee_asset': 'BTS',
                     'manual_offset': 0.0,
-                    'market': 'BTS/TEST',
+                    'market': 'TEST:GOLD',
                     'market_depth_amount': 0.0,
                     'module': 'dexbot.strategies.relative_orders',
                     'partial_fill_threshold': 30.0,
