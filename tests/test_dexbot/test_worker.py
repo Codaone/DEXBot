@@ -18,6 +18,7 @@ class Test_Worker:
         self.TEST_CONFIG = fixture_data()
         self.worker = WorkerInfrastructure(config=self.TEST_CONFIG)
 
+    @pytest.mark.skip('skip !')
     def test_run(self):
         def wait_then_stop():
             time.sleep(20)
