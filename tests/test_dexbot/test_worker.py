@@ -4,9 +4,7 @@ import pytest
 import logging
 import time
 import os
-from pprint import pprint
 from dexbot.worker import WorkerInfrastructure
-from bitshares.bitshares import BitShares
 from fixtures import fixture_data
 logging.basicConfig(
     level=logging.INFO,
@@ -43,14 +41,16 @@ class Test_Worker:
 
     def test_on_market(self):
         from bitshares.price import Order
-        aorder = Order({'amount_to_sell': {'amount': 299999, 'asset_id': '1.3.1570'},
-                        'expiration': '2019-04-13T00:37:21',
-                        'extensions': [],
-                        'fee': {'amount': 2526, 'asset_id': '1.3.0'},
-                        'fill_or_kill': False,
-                        'min_to_receive': {'amount': '2444794742',
-                                           'asset_id': '1.3.5138'},
-                        'seller': '1.2.795945'})
+        aorder = Order({
+            'amount_to_sell':
+            {'amount': 299999, 'asset_id': '1.3.1570'},
+            'expiration': '2019-04-13T00:37:21',
+            'extensions': [],
+            'fee': {'amount': 2526, 'asset_id': '1.3.0'},
+            'fill_or_kill': False,
+            'min_to_receive': {'amount': '2444794742',
+                               'asset_id': '1.3.5138'},
+            'seller': '1.2.795945'})
         self.worker.on_market(aorder)
 
     def test_on_account(self):
