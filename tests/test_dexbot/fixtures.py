@@ -3,7 +3,7 @@ from pprint import pprint
 
 from bitshares import BitShares
 from bitshares.instance import set_shared_blockchain_instance
-
+from bitshares.account import Account
 # default wifs key for testing
 wifs = [
     "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3",
@@ -44,7 +44,7 @@ def fixture_data():
                     'external_price_source': 'null',
                     'fee_asset': 'BTS',
                     'manual_offset': 0.0,
-                    'market': 'BTS:BADCOIN',
+                    'market': 'BTS/BADCOIN',
                     'market_depth_amount': 0.0,
                     'module': 'dexbot.strategies.relative_orders',
                     'partial_fill_threshold': 30.0,
@@ -59,5 +59,11 @@ def fixture_data():
     return TEST_CONFIG
 
 
+def get_balance(sybml='BTS'):
+    account = Account('init0')
+    return account.balance(sybml)
+
+
 if __name__ == '__main__':
     pprint(fixture_data())
+    pprint(get_balance('BTS'))
