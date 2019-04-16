@@ -187,3 +187,10 @@ class Test_Strategy:
 
     def test_check_orders(self):
         self.relative_strategy.check_orders()
+
+
+if __name__ == '__main__':
+    import os
+    cur_dir = os.path.dirname(__file__)
+    test_file = os.path.join(cur_dir, 'test_relative_orders.py')
+    pytest.main(['--capture=no', test_file])
