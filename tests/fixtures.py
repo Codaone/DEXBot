@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from pprint import pprint
 
 from bitshares import BitShares
 from bitshares.instance import set_shared_blockchain_instance
@@ -28,7 +27,8 @@ set_shared_blockchain_instance(bitshares)
 bitshares.set_default_account('dexbot-test1')
 
 # Ensure we are  going to transaction anythin on chain!
-assert not bitshares.nobroadcast
+if bitshares.nobroadcast:
+    raise AssertionError('No broadcasting, no actual transactions!')
 
 
 def fixture_data():
