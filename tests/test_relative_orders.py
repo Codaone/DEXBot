@@ -1,5 +1,5 @@
 from dexbot.strategies.relative_orders import Strategy
-from fixtures import fixture_data
+from fixtures import fixture_data_RO
 import logging
 import math
 logging.basicConfig(
@@ -10,7 +10,7 @@ logging.basicConfig(
 
 class Test_Strategy:
     def setup_class(self):
-        self.TEST_CONFIG = fixture_data()
+        self.TEST_CONFIG = fixture_data_RO()
         self.relative_strategy = Strategy(
             name='worker 1',
             config=self.TEST_CONFIG)
