@@ -15,17 +15,16 @@ logging.basicConfig(
 
 class Test_PriceFeed:
     def setup_class(self):
-        # fixture
-        self.node_url = "wss://api.fr.bitsharesdex.com/ws"
-        self.TEST_CONFIG = {
-            'node': self.node_url
-        }
-        # init
-        self.bts = BitShares(node=self.TEST_CONFIG['node'])
-        self.market = Market("USD:BTS")
+        test_config = {'node': "wss://bts.open.icowallet.net/ws",
+                       'market': 'CNY:BTS'}
+        assert test_config['node'] == "wss://bts.open.icowallet.net/ws"
+        self.bts = BitShares(node=test_config['node'])
+        assert test_config['market'] == 'CNY:BTS'
+        self.market = Market(test_config['market'])
+
         self.pf = BitsharesPriceFeed(
             market=self.market, bitshares_instance=self.bts)
-        # assert init
+
         assert self.bts.info == self.pf.bitshares.info
         assert self.market == self.pf.market
         assert self.pf.fetch_depth == 8
@@ -129,7 +128,6 @@ class Test_PriceFeed:
         assert asc == asc_orders_prices
         assert desc == desc_orders_prices
 
-        import operator
         assert operator.eq(asc, asc_orders_prices)
         assert operator.eq(desc, desc_orders_prices)
 
@@ -170,7 +168,7 @@ class Test_PriceFeed:
         mkt_buy_price = self.pf.get_market_buy_price(
             quote_amount=0, base_amount=0)
 
-        assert highestBid == mkt_buy_price
+        assert float(highestBid) == mkt_buy_price
 
         mkt_buy_price = self.pf.get_market_buy_price(
             quote_amount=10, base_amount=1)
@@ -180,7 +178,7 @@ class Test_PriceFeed:
         mkt_sell_price = self.pf.get_market_sell_price(
             quote_amount=0, base_amount=0)
 
-        assert lowestAsk == mkt_sell_price
+        assert float(lowestAsk) == mkt_sell_price
 
         mkt_sell_price = self.pf.get_market_sell_price(
             quote_amount=10, base_amount=1)
