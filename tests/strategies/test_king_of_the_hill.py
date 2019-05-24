@@ -1,4 +1,4 @@
-from fixtures import fixture_data_KH
+from tests.fixtures import fixture_data
 from dexbot.strategies.king_of_the_hill import Strategy
 import logging
 logging.basicConfig(
@@ -9,8 +9,8 @@ logging.basicConfig(
 
 class Test_Strategy:
     def setup_class(self):
-        self.TEST_CONFIG = fixture_data_KH()
-        self.king_hill = Strategy(
+        self.TEST_CONFIG = fixture_data('KH')
+        self.kh = Strategy(
             name='worker 1',
             config=self.TEST_CONFIG)
 
@@ -21,38 +21,39 @@ class Test_Strategy:
         pass
 
     def test_maintain_strategy(self):
-        self.king_hill.maintain_strategy()
-    # def test_check_orders(self):
-    #     self.king_hill.check_orders()
-    # def test_get_order_type(self):
-    #     from bitshares.market import Market
-    #     market = Market(self.TEST_CONFIG['workers']['worker 1']['market'])
-    #     tx = market.buy(price=0.1, amount=1, returnOrderId=True)
-    #     logging.info('Order created:{}'.format(tx['orderid']))
-    #     for o in market.accountopenorders():
-    #         r = self.king_hill.get_order_type(o)
-    #         if r != 'buy':
-    #             raise AssertionError('order type error!')
-    #         logging.info(r)
-    #     market.cancel(tx['orderid'])
-    #     logging.info('Cancel order:{}'.format(tx['orderid']))
-    # def test_calc_order_prices(self):
-    #     self.king_hill.calc_order_prices()
-    #     r=self.king_hill.buy_price
-    #     if r is not None:
-    #         raise AssertionError('buy_price have no  value!')
+        self.kh.maintain_strategy()
 
-    # def test_place_order(self):
-    #     self.king_hill.place_order('buy')
-    # def test_place_orders(self):
-    #     self.king_hill.place_orders()
-    # def test_amount_quote():
-    #     r=self.king_hill.amount_quote
-    #     logging.info(r)
+    def test_check_orders(self):
+        self.kh.check_orders()
 
-    # def test_amount_base():
-    #     r=self.king_hill.amount_base
-    #     logging.info(r)
+    def test_get_order_type(self):
+        from bitshares.market import Market
+        market = Market(self.TEST_CONFIG['workers']['worker 1']['market'])
+        tx = market.buy(price=0.1, amount=1, returnOrderId=True)
+        logging.info('Order created:{}'.format(tx['orderid']))
+        for o in market.accountopenorders():
+            r = self.kh.get_order_type(o)
+            assert r == 'buy'
+        market.cancel(tx['orderid'])
+        logging.info('Cancel order:{}'.format(tx['orderid']))
+
+    def test_calc_order_prices(self):
+        self.kh.calc_order_prices()
+        r = self.kh.buy_price
+
+    def test_place_order(self):
+        self.kh.place_order('buy')
+
+    def test_place_orders(self):
+        self.kh.place_orders()
+
+    def test_amount_quote(self):
+        r = self.kh.amount_quote
+        logging.info(r)
+
+    def test_amount_base(self):
+        r = self.kh.amount_base
+        logging.info(r)
 
 
 if __name__ == '__main__':

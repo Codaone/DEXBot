@@ -241,12 +241,12 @@ class BitsharesOrderEngine(Storage, Events):
     def cancel_all_orders(self):
         """ Cancel all orders of the worker's account
         """
-        self.log.info('Canceling all orders')
+        # self.log.info('Canceling all orders')
 
         if self.all_own_orders:
             self.cancel_orders(self.all_own_orders)
 
-        self.log.info("Orders canceled")
+        # self.log.info("Orders canceled")
 
     def cancel_orders(self, orders, batch_only=False):
         """ Cancel specific order(s)
@@ -540,18 +540,18 @@ class BitsharesOrderEngine(Storage, Events):
 
         # Don't try to place an order of size 0
         if not base_amount:
-            self.log.critical('Trying to buy 0')
+            # self.log.critical('Trying to buy 0')
             self.disabled = True
             return None
 
         # Make sure we have enough balance for the order
         if return_order_id and self.balance(self.market['base']) < base_amount:
-            self.log.critical("Insufficient buy balance, needed {} {}".format(base_amount, symbol))
+            # self.log.critical("Insufficient buy balance, needed {} {}".format(base_amount, symbol))
             self.disabled = True
             return None
 
-        self.log.info('Placing a buy order with {:.{prec}f} {} @ {:.8f}'
-                      .format(base_amount, symbol, price, prec=precision))
+        # self.log.info('Placing a buy order with {:.{prec}f} {} @ {:.8f}'
+        #               .format(base_amount, symbol, price, prec=precision))
 
         # Place the order
         buy_transaction = self.retry_action(
@@ -566,7 +566,7 @@ class BitsharesOrderEngine(Storage, Events):
             **kwargs
         )
 
-        self.log.debug('Placed buy order {}'.format(buy_transaction))
+        # self.log.debug('Placed buy order {}'.format(buy_transaction))
         if return_order_id:
             buy_order = self.get_order(buy_transaction['orderid'], return_none=return_none)
             if buy_order and buy_order['deleted']:
@@ -596,18 +596,18 @@ class BitsharesOrderEngine(Storage, Events):
 
         # Don't try to place an order of size 0
         if not quote_amount:
-            self.log.critical('Trying to sell 0')
+            # self.log.critical('Trying to sell 0')
             self.disabled = True
             return None
 
         # Make sure we have enough balance for the order
         if return_order_id and self.balance(self.market['quote']) < quote_amount:
-            self.log.critical("Insufficient sell balance, needed {} {}".format(amount, symbol))
+            # self.log.critical("Insufficient sell balance, needed {} {}".format(amount, symbol))
             self.disabled = True
             return None
 
-        self.log.info('Placing a sell order with {:.{prec}f} {} @ {:.8f}'
-                      .format(quote_amount, symbol, price, prec=precision))
+        # self.log.info('Placing a sell order with {:.{prec}f} {} @ {:.8f}'
+        #               .format(quote_amount, symbol, price, prec=precision))
 
         # Place the order
         sell_transaction = self.retry_action(
@@ -824,3 +824,35 @@ class BitsharesOrderEngine(Storage, Events):
         if return_none and order['deleted']:
             return None
         return order
+
+if __name__=='__main__':
+    from tests.fixtures import fixture_data 
+    from bitshares import BitShares
+    from bitshares.account import Account
+    TEST_CONFIG = fixture_data('OE')
+    bts = BitShares(TEST_CONFIG['node'])
+    account = Account(
+        TEST_CONFIG['workers']['worker 1']['account']
+    )
+    assert account['name'] == 'dexbot-test4'
+    market_symbol = TEST_CONFIG['workers']['worker 1']['market']
+    assert market_symbol == 'TEST/DEXBOT'
+    base_symbol = market_symbol.split('/')[1]
+    assert base_symbol == 'DEXBOT'
+    quote_symbol = market_symbol.split('/')[0]
+    assert quote_symbol == 'TEST'
+    market = Market(market_symbol)
+    fee_asset = TEST_CONFIG['workers']['worker 1']['fee_asset']
+    fee_asset == 'TEST'
+    oe = BitsharesOrderEngine(
+        name='worker 1',
+        config=TEST_CONFIG,
+        account=account,
+        market=market,
+        fee_asset_symbol=fee_asset,
+        bitshares_instance=None,
+        bitshares_bundle=None,
+    )
+
+    r=oe.get_own_spread()
+    print(r)

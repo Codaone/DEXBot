@@ -26,8 +26,7 @@ def init_default(account_name='', wif=''):
     bitshares.set_default_account(account_name)
 
     # Ensure we are  going to transaction anythin on chain!
-    if bitshares.nobroadcast:
-        raise AssertionError('No broadcasting, no actual transactions!')
+    assert bitshares.nobroadcast == False
 
 
 def fixture_data(type=''):
@@ -65,7 +64,7 @@ def fixture_data(type=''):
             }
         }
         return TEST_CONFIG
-    elif type == 'HK':
+    elif type == 'KH':
         init_default(account_name='dexbot-test3',
                      wif='5JAfKCfrJDt7UBUCjqoG6SnP1FUQt3G2YvPDCowGNScmyKNLrxL')
         TEST_CONFIG = {
