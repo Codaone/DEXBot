@@ -111,10 +111,6 @@ class BitsharesOrderEngine(Storage, Events):
         # buy/sell actions will return order id by default
         self.returnOrderId = 'head'
 
-        self.orders_log = logging.LoggerAdapter(
-            logging.getLogger('dexbot.orders_log'), {}
-        )
-
     def _callbackPlaceFillOrders(self, d):
         """ This method distinguishes notifications caused by Matched orders from those caused by placed orders
         """

@@ -1,0 +1,6 @@
+# Include base requirements
+-r requirements.txt
+
+# Packages needed for running testsuite
+docker==3.7.2
+pytest==4.4.0
