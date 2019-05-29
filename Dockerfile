@@ -17,7 +17,7 @@ RUN set -xe ;\
     apt-get update ;\
     # Prepare dependencies
     apt-get install -y --no-install-recommends gcc make libssl-dev python3-pip python3-dev python3-setuptools \
-        python3-async whiptail ;\
+        python3-async whiptail git ;\
     apt-get clean ;\
     rm -rf /var/lib/apt/lists/*
 

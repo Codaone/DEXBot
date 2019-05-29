@@ -536,10 +536,6 @@ class Strategy(StrategyBase):
                 if not current_order:
                     need_update = True
                     self.log.debug('Could not found order on the market, it was filled, expired or cancelled')
-                    # Write a trade log entry only when we are not using custom expiration because we cannot
-                    # distinguish an expired order from filled
-                    if not self.is_custom_expiration:
-                        self.write_order_log(self.worker_name, order)
                 elif self.is_reset_on_partial_fill:
                     # Detect partially filled orders;
                     # on fresh order 'for_sale' is always equal to ['base']['amount']

@@ -88,3 +88,6 @@ archive
 
 # Keep readthedocs config
 !.readthedocs.yml
+
+# Bandit config
+!bandit.yml
