@@ -30,7 +30,7 @@ class RelativeConfig(BaseConfig):
         relative_orders_config = [
             ConfigElement('external_feed', 'bool', False, 'External price feed',
                           'Use external reference price instead of center price acquired from the market', None),
-            ConfigElement('external_price_source', 'choice', EXCHANGES[0], 'External price source',
+            ConfigElement('external_price_source', 'choice', EXCHANGES[0][0], 'External price source',
                           'The bot will try to get price information from this source', EXCHANGES),
             ConfigElement('amount', 'float', 1, 'Amount',
                           'Fixed order size, expressed in quote asset, unless "relative order size" selected',

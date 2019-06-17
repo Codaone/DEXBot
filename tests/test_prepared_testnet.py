@@ -26,8 +26,10 @@ def test_worker_balance(bitshares, accounts):
 def test_asset_base(bitshares, assets):
     a = Asset('MYBASE', full=True, bitshares_instance=bitshares)
     assert a['dynamic_asset_data']['current_supply'] > 1000
+    assert a.symbol == 'MYBASE'
 
 
 def test_asset_quote(bitshares, assets):
     a = Asset('MYQUOTE', full=True, bitshares_instance=bitshares)
     assert a['dynamic_asset_data']['current_supply'] > 1000
+    assert a.symbol == 'MYQUOTE'

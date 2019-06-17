@@ -6,6 +6,7 @@ import socket
 import random
 
 from bitshares import BitShares
+from bitshares.instance import set_shared_bitshares_instance
 from bitshares.genesisbalance import GenesisBalance
 from bitshares.account import Account
 from bitshares.asset import Asset
@@ -87,6 +88,9 @@ def bitshares_instance(bitshares_testnet):
     bitshares = BitShares(
         node='ws://127.0.0.1:{}'.format(bitshares_testnet.service_port), keys=PRIVATE_KEYS, num_retries=-1
     )
+    # Shared instance allows to avoid any bugs when bitshares_instance is not passed explicitly when instantiating
+    # objects
+    set_shared_bitshares_instance(bitshares)
     # Todo: show chain params when connectiong to unknown network
     # https://github.com/bitshares/python-bitshares/issues/221
 
@@ -123,6 +127,10 @@ def create_asset(bitshares):
 @pytest.fixture(scope='session')
 def issue_asset(bitshares):
     """ Issue asset shares to specified account
+
+        :param str asset: asset symbol to issue
+        :param float amount: amount to issue
+        :param str to: account name to receive new shares
     """
 
     def _issue_asset(asset, amount, to):
