@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Test Report</title>
+    <style>body {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	min-width: 1200px;
+	color: #999;
+}
+
+h1 {
+	font-size: 24px;
+	color: black;
+}
+
+h2 {
+	font-size: 16px;
+	color: black;
+}
+
+p {
+    color: black;
+}
+
+a {
+	color: #999;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+
+#environment td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+}
+
+#environment tr:nth-child(odd) {
+	background-color: #f6f6f6;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed, .passed .col-result {
+	color: green;
+}
+span.skipped, span.xfailed, span.rerun, .skipped .col-result, .xfailed .col-result, .rerun .col-result {
+	color: orange;
+}
+span.error, span.failed, span.xpassed, .error .col-result, .failed .col-result, .xpassed .col-result  {
+	color: red;
+}
+
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+
+#results-table {
+	border: 1px solid #e6e6e6;
+	color: #999;
+	font-size: 12px;
+	width: 100%
+}
+
+#results-table th, #results-table td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+	text-align: left
+}
+#results-table th {
+	font-weight: bold
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+
+.log:only-child {
+	height: inherit
+}
+.log {
+	background-color: #e6e6e6;
+	border: 1px solid #e6e6e6;
+	color: black;
+	display: block;
+	font-family: "Courier New", Courier, monospace;
+	height: 230px;
+	overflow-y: scroll;
+	padding: 5px;
+	white-space: pre-wrap
+}
+div.image {
+	border: 1px solid #e6e6e6;
+	float: right;
+	height: 240px;
+	margin-left: 5px;
+	overflow: hidden;
+	width: 320px
+}
+div.image img {
+	width: 320px
+}
+.collapsed {
+	display: none;
+}
+.expander::after {
+	content: " (show details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+.collapser::after {
+	content: " (hide details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+	cursor: pointer;
+}
+
+.sort-icon {
+	font-size: 0px;
+	float: left;
+	margin-right: 5px;
+	margin-top: 5px;
+	/*triangle*/
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+}
+
+.inactive .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #E6E6E6;
+}
+
+.asc.active .sort-icon {
+	/*finish triangle*/
+	border-bottom: 8px solid #999;
+}
+
+.desc.active .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #999;
+}
+</style></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    toggle_sort_states(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+    var multiplier = reversed ? -1 : 1;
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+        return multiplier * (key_a >= key_b ? 1 : -1);
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>oe_report.html</h1>
+    <p>Report generated on 22-May-2019 at 16:24:22 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v1.20.0</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>Packages</td>
+        <td>{&apos;pytest&apos;: &apos;4.5.0&apos;, &apos;py&apos;: &apos;1.8.0&apos;, &apos;pluggy&apos;: &apos;0.11.0&apos;}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Darwin-17.7.0-x86_64-i386-64bit</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{&apos;metadata&apos;: &apos;1.8.0&apos;, &apos;html&apos;: &apos;1.20.0&apos;}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.7.2</td></tr></table>
+    <h2>Summary</h2>
+    <p>32 tests ran in 341.83 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">20 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">12 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable numeric" col="duration">Duration</th>
+          <th>Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_calculate_worker_value</td>
+          <td class="col-duration">0.16</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x103b98828&gt;<br/><br/>    def test_calculate_worker_value(self):<br/>&gt;       cwv = self.oe.calculate_worker_value(self.base_symbol)<br/><br/>test_bitshares_engine.py:89: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:224: in calculate_worker_value<br/>    orders = self.own_orders<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:747: in own_orders<br/>    return self.get_own_orders()<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:716: in get_own_orders<br/>    if self.worker[&quot;market&quot;] == order.market and self.account.openorders:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = event &#x27;worker&#x27;, key = &#x27;market&#x27;<br/><br/>    def __getitem__(self, key):<br/>&gt;       return self.targets[key]<br/><span class="error">E       TypeError: list indices must be integers or slices, not str</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:116: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_cancel_all_orders</td>
+          <td class="col-duration">2.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x103c57f60&gt;<br/><br/>    def test_cancel_all_orders(self):<br/>        self.market.buy(0.1, 1)<br/>        assert self.account.openorders != []<br/>        self.oe.cancel_all_orders()<br/>&gt;       assert self.account.openorders == []<br/><span class="error">E       assert [1.00000 TEST...0 DEXBOT/TEST] == []</span><br/><span class="error">E         Left contains 2 more items, first extra item: 1.00000 TEST for 0.1000 DEXBOT @ 0.100000000 DEXBOT/TEST</span><br/><span class="error">E         Use -v to get the full diff</span><br/><br/>test_bitshares_engine.py:96: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_cancel_orders</td>
+          <td class="col-duration">1.40</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x103ba5f28&gt;<br/><br/>    def test_cancel_orders(self):<br/>        self.market.buy(0.1, 1)<br/>        assert self.account.openorders != []<br/>        for o in self.account.openorders:<br/>            self.oe.cancel_orders(o)<br/>&gt;       assert self.account.openorders == []<br/><span class="error">E       assert [1.00000 TEST...0 DEXBOT/TEST] == []</span><br/><span class="error">E         Left contains 2 more items, first extra item: 1.00000 TEST for 0.1000 DEXBOT @ 0.100000000 DEXBOT/TEST</span><br/><span class="error">E         Use -v to get the full diff</span><br/><br/>test_bitshares_engine.py:103: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_highest_own_buy_order</td>
+          <td class="col-duration">0.47</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x1041d80f0&gt;, orders = None<br/><br/>    def test_get_highest_own_buy_order(self, orders=None):<br/>        self.oe.cancel_all_orders()<br/>        ors = self.account.openorders<br/>&gt;       assert ors == []<br/><span class="error">E       assert [1.00000 TEST...0 DEXBOT/TEST] == []</span><br/><span class="error">E         Left contains one more item: 1.00000 TEST for 0.1000 DEXBOT @ 0.100000000 DEXBOT/TEST</span><br/><span class="error">E         Use -v to get the full diff</span><br/><br/>test_bitshares_engine.py:139: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_own_buy_orders</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x1041a3ba8&gt;<br/><br/>    def test_get_own_buy_orders(self):<br/>&gt;       orders = self.oe.get_own_buy_orders()<br/><br/>test_bitshares_engine.py:172: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:417: in get_own_buy_orders<br/>    orders = self.own_orders<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:747: in own_orders<br/>    return self.get_own_orders()<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:716: in get_own_orders<br/>    if self.worker[&quot;market&quot;] == order.market and self.account.openorders:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = event &#x27;worker&#x27;, key = &#x27;market&#x27;<br/><br/>    def __getitem__(self, key):<br/>&gt;       return self.targets[key]<br/><span class="error">E       TypeError: list indices must be integers or slices, not str</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:116: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_own_sell_orders</td>
+          <td class="col-duration">0.07</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x1041b1e80&gt;<br/><br/>    def test_get_own_sell_orders(self):<br/>&gt;       orders = self.oe.get_own_sell_orders()<br/><br/>test_bitshares_engine.py:175: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:428: in get_own_sell_orders<br/>    orders = self.own_orders<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:747: in own_orders<br/>    return self.get_own_orders()<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:716: in get_own_orders<br/>    if self.worker[&quot;market&quot;] == order.market and self.account.openorders:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = event &#x27;worker&#x27;, key = &#x27;market&#x27;<br/><br/>    def __getitem__(self, key):<br/>&gt;       return self.targets[key]<br/><span class="error">E       TypeError: list indices must be integers or slices, not str</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:116: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_own_spread</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x104185be0&gt;<br/><br/>    def test_get_own_spread(self):<br/>&gt;       spread = self.oe.get_own_spread()<br/><br/>test_bitshares_engine.py:178: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:439: in get_own_spread<br/>    highest_own_buy_price = self.get_highest_own_buy_order().get(&#x27;price&#x27;)<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:351: in get_highest_own_buy_order<br/>    orders = self.get_own_buy_orders()<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:417: in get_own_buy_orders<br/>    orders = self.own_orders<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:747: in own_orders<br/>    return self.get_own_orders()<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:716: in get_own_orders<br/>    if self.worker[&quot;market&quot;] == order.market and self.account.openorders:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = event &#x27;worker&#x27;, key = &#x27;market&#x27;<br/><br/>    def __getitem__(self, key):<br/>&gt;       return self.targets[key]<br/><span class="error">E       TypeError: list indices must be integers or slices, not str</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:116: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_place_market_sell_order</td>
+          <td class="col-duration">5.99</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x1041a3208&gt;<br/><br/>    def test_place_market_sell_order(self):<br/>&gt;       r = self.oe.place_market_sell_order(10, 1)<br/><br/>test_bitshares_engine.py:225: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}, amount = 10, price = 1, return_none = False, invert = False, args = (), kwargs = {}, symbol = &#x27;TEST&#x27;, precision = 5<br/>quote_amount = 10.0, return_order_id = &#x27;head&#x27;<br/>sell_transaction = {&#x27;block_num&#x27;: 27103260, &#x27;expiration&#x27;: &#x27;2019-05-22T08:19:21&#x27;, &#x27;extensions&#x27;: [], &#x27;id&#x27;: &#x27;b1bec6301811d2869b7a88dad8a4b6a96a137a0f&#x27;, ...}<br/><br/>    def place_market_sell_order(self, amount, price, return_none=False, invert=False, *args, **kwargs):<br/>        &quot;&quot;&quot; Places a sell order in the market<br/>    <br/>            :param float | amount: Order amount in QUOTE<br/>            :param float | price: Order price in BASE<br/>            :param bool | return_none:<br/>            :param bool | invert: True = return inverted sell order<br/>            :param args:<br/>            :param kwargs:<br/>            :return:<br/>        &quot;&quot;&quot;<br/>        symbol = self.market[&#x27;quote&#x27;][&#x27;symbol&#x27;]<br/>        precision = self.market[&#x27;quote&#x27;][&#x27;precision&#x27;]<br/>        quote_amount = truncate(amount, precision)<br/>        return_order_id = kwargs.pop(&#x27;returnOrderId&#x27;, self.returnOrderId)<br/>    <br/>        # Don&#x27;t try to place an order of size 0<br/>        if not quote_amount:<br/>            # self.log.critical(&#x27;Trying to sell 0&#x27;)<br/>            self.disabled = True<br/>            return None<br/>    <br/>        # Make sure we have enough balance for the order<br/>        if return_order_id and self.balance(self.market[&#x27;quote&#x27;]) &lt; quote_amount:<br/>            # self.log.critical(&quot;Insufficient sell balance, needed {} {}&quot;.format(amount, symbol))<br/>            self.disabled = True<br/>            return None<br/>    <br/>        # self.log.info(&#x27;Placing a sell order with {:.{prec}f} {} @ {:.8f}&#x27;<br/>        #               .format(quote_amount, symbol, price, prec=precision))<br/>    <br/>        # Place the order<br/>        sell_transaction = self.retry_action(<br/>            self.market.sell,<br/>            price,<br/>            Amount(amount=amount, asset=self.market[&quot;quote&quot;]),<br/>            account=self.account.name,<br/>            expiration=self.expiration,<br/>            returnOrderId=return_order_id,<br/>            fee_asset=self.fee_asset[&#x27;id&#x27;],<br/>            *args,<br/>            **kwargs<br/>        )<br/>    <br/>&gt;       self.log.debug(&#x27;Placed sell order {}&#x27;.format(sell_transaction))<br/><span class="error">E       AttributeError: &#x27;_EventSlot&#x27; object has no attribute &#x27;debug&#x27;</span><br/><br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:625: AttributeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_all_own_orders</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x104168e10&gt;<br/><br/>    def test_get_all_own_orders(self):<br/>&gt;       r = self.oe.get_own_orders()<br/><br/>test_bitshares_engine.py:248: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:716: in get_own_orders<br/>    if self.worker[&quot;market&quot;] == order.market and self.account.openorders:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = event &#x27;worker&#x27;, key = &#x27;market&#x27;<br/><br/>    def __getitem__(self, key):<br/>&gt;       return self.targets[key]<br/><span class="error">E       TypeError: list indices must be integers or slices, not str</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:116: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_all_own_orders</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x1041e4f98&gt;<br/><br/>    def test_all_own_orders(self):<br/>&gt;       self.oe.all_own_orders()<br/><span class="error">E       TypeError: &#x27;list&#x27; object is not callable</span><br/><br/>test_bitshares_engine.py:251: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_own_orders</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x104160240&gt;<br/><br/>    def test_own_orders(self):<br/>&gt;       self.oe.own_orders()<br/><br/>test_bitshares_engine.py:254: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:747: in own_orders<br/>    return self.get_own_orders()<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:716: in get_own_orders<br/>    if self.worker[&quot;market&quot;] == order.market and self.account.openorders:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = event &#x27;worker&#x27;, key = &#x27;market&#x27;<br/><br/>    def __getitem__(self, key):<br/>&gt;       return self.targets[key]<br/><span class="error">E       TypeError: list indices must be integers or slices, not str</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:116: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_updated_limit_order</td>
+          <td class="col-duration">318.77</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">args = ({4356954824: &lt;bitshares.bitshares.BitShares object at 0x104156518&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}},)<br/>kwargs = {}, func = &lt;function Rpc.__getattr__.&lt;locals&gt;.method at 0x104145840&gt;<br/>traceback = &lt;module &#x27;traceback&#x27; from &#x27;/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/traceback.py&#x27;&gt;<br/><br/>    def func(*args, **kwargs):<br/>        while True:<br/>            try:<br/>                func = self.connection.__getattr__(name)<br/>&gt;               r = func(*args, **kwargs)<br/><br/>../../../lib/python3.7/site-packages/grapheneapi/api.py:168: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>args = ({4356954824: &lt;bitshares.bitshares.BitShares object at 0x104156518&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}},)<br/>kwargs = {}, api_id = 0<br/>query = {&#x27;id&#x27;: 1, &#x27;jsonrpc&#x27;: &#x27;2.0&#x27;, &#x27;method&#x27;: &#x27;call&#x27;, &#x27;params&#x27;: [0, &#x27;__deepcopy__&#x27;, [{4356954824: &lt;bitshares.bitshares.BitShar...&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}}]]}<br/><br/>    def method(*args, **kwargs):<br/>    <br/>        # Sepcify the api to talk to<br/>        if &quot;api_id&quot; not in kwargs:  # pragma: no cover<br/>            if &quot;api&quot; in kwargs:<br/>                if kwargs[&quot;api&quot;] in self.api_id and self.api_id[kwargs[&quot;api&quot;]]:<br/>                    api_id = self.api_id[kwargs[&quot;api&quot;]]<br/>                else:<br/>                    api_id = kwargs[&quot;api&quot;]<br/>            else:<br/>                api_id = 0<br/>        else:  # pragma: no cover<br/>            api_id = kwargs[&quot;api_id&quot;]<br/>    <br/>        # let&#x27;s be able to define the num_retries per query<br/>        self.num_retries = kwargs.get(&quot;num_retries&quot;, self.num_retries)<br/>    <br/>        query = {<br/>            &quot;method&quot;: &quot;call&quot;,<br/>            &quot;params&quot;: [api_id, name, list(args)],<br/>            &quot;jsonrpc&quot;: &quot;2.0&quot;,<br/>            &quot;id&quot;: self.get_request_id(),<br/>        }<br/>&gt;       r = self.rpcexec(query)<br/><br/>../../../lib/python3.7/site-packages/grapheneapi/rpc.py:137: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;grapheneapi.websocket.Websocket object at 0x1041a86a0&gt;<br/>payload = {&#x27;id&#x27;: 1, &#x27;jsonrpc&#x27;: &#x27;2.0&#x27;, &#x27;method&#x27;: &#x27;call&#x27;, &#x27;params&#x27;: [0, &#x27;__deepcopy__&#x27;, [{4356954824: &lt;bitshares.bitshares.BitShar...&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}}]]}<br/><br/>    def rpcexec(self, payload):<br/>        &quot;&quot;&quot; Execute a call by sending the payload<br/>    <br/>            :param json payload: Payload data<br/>            :raises ValueError: if the server does not respond in proper JSON<br/>                format<br/>        &quot;&quot;&quot;<br/>        if not self.ws:  # pragma: no cover<br/>            self.connect()<br/>    <br/>&gt;       log.debug(json.dumps(payload))<br/><br/>../../../lib/python3.7/site-packages/grapheneapi/websocket.py:62: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>obj = {&#x27;id&#x27;: 1, &#x27;jsonrpc&#x27;: &#x27;2.0&#x27;, &#x27;method&#x27;: &#x27;call&#x27;, &#x27;params&#x27;: [0, &#x27;__deepcopy__&#x27;, [{4356954824: &lt;bitshares.bitshares.BitShar...&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}}]]}<br/>skipkeys = False, ensure_ascii = True, check_circular = True, allow_nan = True, cls = None, indent = None, separators = None<br/>default = None<br/><br/>    def dumps(obj, *, skipkeys=False, ensure_ascii=True, check_circular=True,<br/>            allow_nan=True, cls=None, indent=None, separators=None,<br/>            default=None, sort_keys=False, **kw):<br/>        &quot;&quot;&quot;Serialize ``obj`` to a JSON formatted ``str``.<br/>    <br/>        If ``skipkeys`` is true then ``dict`` keys that are not basic types<br/>        (``str``, ``int``, ``float``, ``bool``, ``None``) will be skipped<br/>        instead of raising a ``TypeError``.<br/>    <br/>        If ``ensure_ascii`` is false, then the return value can contain non-ASCII<br/>        characters if they appear in strings contained in ``obj``. Otherwise, all<br/>        such characters are escaped in JSON strings.<br/>    <br/>        If ``check_circular`` is false, then the circular reference check<br/>        for container types will be skipped and a circular reference will<br/>        result in an ``OverflowError`` (or worse).<br/>    <br/>        If ``allow_nan`` is false, then it will be a ``ValueError`` to<br/>        serialize out of range ``float`` values (``nan``, ``inf``, ``-inf``) in<br/>        strict compliance of the JSON specification, instead of using the<br/>        JavaScript equivalents (``NaN``, ``Infinity``, ``-Infinity``).<br/>    <br/>        If ``indent`` is a non-negative integer, then JSON array elements and<br/>        object members will be pretty-printed with that indent level. An indent<br/>        level of 0 will only insert newlines. ``None`` is the most compact<br/>        representation.<br/>    <br/>        If specified, ``separators`` should be an ``(item_separator, key_separator)``<br/>        tuple.  The default is ``(&#x27;, &#x27;, &#x27;: &#x27;)`` if *indent* is ``None`` and<br/>        ``(&#x27;,&#x27;, &#x27;: &#x27;)`` otherwise.  To get the most compact JSON representation,<br/>        you should specify ``(&#x27;,&#x27;, &#x27;:&#x27;)`` to eliminate whitespace.<br/>    <br/>        ``default(obj)`` is a function that should return a serializable version<br/>        of obj or raise TypeError. The default simply raises TypeError.<br/>    <br/>        If *sort_keys* is true (default: ``False``), then the output of<br/>        dictionaries will be sorted by key.<br/>    <br/>        To use a custom ``JSONEncoder`` subclass (e.g. one that overrides the<br/>        ``.default()`` method to serialize additional types), specify it with<br/>        the ``cls`` kwarg; otherwise ``JSONEncoder`` is used.<br/>    <br/>        &quot;&quot;&quot;<br/>        # cached encoder<br/>        if (not skipkeys and ensure_ascii and<br/>            check_circular and allow_nan and<br/>            cls is None and indent is None and separators is None and<br/>            default is None and not sort_keys and not kw):<br/>&gt;           return _default_encoder.encode(obj)<br/><br/>/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/json/__init__.py:231: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;json.encoder.JSONEncoder object at 0x102284438&gt;<br/>o = {&#x27;id&#x27;: 1, &#x27;jsonrpc&#x27;: &#x27;2.0&#x27;, &#x27;method&#x27;: &#x27;call&#x27;, &#x27;params&#x27;: [0, &#x27;__deepcopy__&#x27;, [{4356954824: &lt;bitshares.bitshares.BitShar...&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}}]]}<br/><br/>    def encode(self, o):<br/>        &quot;&quot;&quot;Return a JSON string representation of a Python data structure.<br/>    <br/>        &gt;&gt;&gt; from json.encoder import JSONEncoder<br/>        &gt;&gt;&gt; JSONEncoder().encode({&quot;foo&quot;: [&quot;bar&quot;, &quot;baz&quot;]})<br/>        &#x27;{&quot;foo&quot;: [&quot;bar&quot;, &quot;baz&quot;]}&#x27;<br/>    <br/>        &quot;&quot;&quot;<br/>        # This is for extremely simple cases and benchmarks.<br/>        if isinstance(o, str):<br/>            if self.ensure_ascii:<br/>                return encode_basestring_ascii(o)<br/>            else:<br/>                return encode_basestring(o)<br/>        # This doesn&#x27;t pass the iterator directly to &#x27;&#x27;.join() because the<br/>        # exceptions aren&#x27;t as detailed.  The list call should be roughly<br/>        # equivalent to the PySequence_Fast that &#x27;&#x27;.join() would do.<br/>&gt;       chunks = self.iterencode(o, _one_shot=True)<br/><br/>/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/json/encoder.py:199: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;json.encoder.JSONEncoder object at 0x102284438&gt;<br/>o = {&#x27;id&#x27;: 1, &#x27;jsonrpc&#x27;: &#x27;2.0&#x27;, &#x27;method&#x27;: &#x27;call&#x27;, &#x27;params&#x27;: [0, &#x27;__deepcopy__&#x27;, [{4356954824: &lt;bitshares.bitshares.BitShar...&gt;, 4357017888: {}, 4363874816: &lt;[KeyError(&quot;&#x27;price&#x27;&quot;) raised in repr()] Order object at 0x1041b7468&gt;, 4364056760: {}}]]}<br/>_one_shot = True<br/><br/>    def iterencode(self, o, _one_shot=False):<br/>        &quot;&quot;&quot;Encode the given object and yield each string<br/>        representation as available.<br/>    <br/>        For example::<br/>    <br/>            for chunk in JSONEncoder().iterencode(bigobject):<br/>                mysocket.write(chunk)<br/>    <br/>        &quot;&quot;&quot;<br/>        if self.check_circular:<br/>            markers = {}<br/>        else:<br/>            markers = None<br/>        if self.ensure_ascii:<br/>            _encoder = encode_basestring_ascii<br/>        else:<br/>            _encoder = encode_basestring<br/>    <br/>        def floatstr(o, allow_nan=self.allow_nan,<br/>                _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):<br/>            # Check for specials.  Note that this type of test is processor<br/>            # and/or platform-specific, so do tests which don&#x27;t depend on the<br/>            # internals.<br/>    <br/>            if o != o:<br/>                text = &#x27;NaN&#x27;<br/>            elif o == _inf:<br/>                text = &#x27;Infinity&#x27;<br/>            elif o == _neginf:<br/>                text = &#x27;-Infinity&#x27;<br/>            else:<br/>                return _repr(o)<br/>    <br/>            if not allow_nan:<br/>                raise ValueError(<br/>                    &quot;Out of range float values are not JSON compliant: &quot; +<br/>                    repr(o))<br/>    <br/>            return text<br/>    <br/>    <br/>        if (_one_shot and c_make_encoder is not None<br/>                and self.indent is None):<br/>            _iterencode = c_make_encoder(<br/>                markers, self.default, _encoder, self.indent,<br/>                self.key_separator, self.item_separator, self.sort_keys,<br/>                self.skipkeys, self.allow_nan)<br/>        else:<br/>            _iterencode = _make_iterencode(<br/>                markers, self.default, _encoder, self.indent, floatstr,<br/>                self.key_separator, self.item_separator, self.sort_keys,<br/>                self.skipkeys, _one_shot)<br/>&gt;       return _iterencode(o, 0)<br/><br/>/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/json/encoder.py:257: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;json.encoder.JSONEncoder object at 0x102284438&gt;, o = &lt;bitshares.bitshares.BitShares object at 0x104156518&gt;<br/><br/>    def default(self, o):<br/>        &quot;&quot;&quot;Implement this method in a subclass such that it returns<br/>        a serializable object for ``o``, or calls the base implementation<br/>        (to raise a ``TypeError``).<br/>    <br/>        For example, to support arbitrary iterators, you could<br/>        implement default like this::<br/>    <br/>            def default(self, o):<br/>                try:<br/>                    iterable = iter(o)<br/>                except TypeError:<br/>                    pass<br/>                else:<br/>                    return list(iterable)<br/>                # Let the base class default method raise the TypeError<br/>                return JSONEncoder.default(self, o)<br/>    <br/>        &quot;&quot;&quot;<br/>&gt;       raise TypeError(f&#x27;Object of type {o.__class__.__name__} &#x27;<br/>                        f&#x27;is not JSON serializable&#x27;)<br/><span class="error">E       TypeError: Object of type BitShares is not JSON serializable</span><br/><br/>/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/json/encoder.py:179: TypeError<br/><br/>During handling of the above exception, another exception occurred:<br/><br/>self = &lt;test_bitshares_engine.Test_BitsharesOrderEngine object at 0x1041563c8&gt;<br/><br/>    def test_get_updated_limit_order(self):<br/>        ors = self.account.openorders<br/>        for o in ors:<br/>&gt;           r = self.oe.get_updated_limit_order(o)<br/><br/>test_bitshares_engine.py:264: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/orderengines/bitshares_engine.py:764: in get_updated_limit_order<br/>    order = copy.deepcopy(limit_order)<br/>../../../lib/python3.7/copy.py:180: in deepcopy<br/>    y = _reconstruct(x, memo, *rv)<br/>../../../lib/python3.7/copy.py:280: in _reconstruct<br/>    state = deepcopy(state, memo)<br/>../../../lib/python3.7/copy.py:150: in deepcopy<br/>    y = copier(x, memo)<br/>../../../lib/python3.7/copy.py:240: in _deepcopy_dict<br/>    y[deepcopy(key, memo)] = deepcopy(value, memo)<br/>../../../lib/python3.7/copy.py:180: in deepcopy<br/>    y = _reconstruct(x, memo, *rv)<br/>../../../lib/python3.7/copy.py:280: in _reconstruct<br/>    state = deepcopy(state, memo)<br/>../../../lib/python3.7/copy.py:150: in deepcopy<br/>    y = copier(x, memo)<br/>../../../lib/python3.7/copy.py:240: in _deepcopy_dict<br/>    y[deepcopy(key, memo)] = deepcopy(value, memo)<br/>../../../lib/python3.7/copy.py:161: in deepcopy<br/>    y = copier(memo)<br/>../../../lib/python3.7/site-packages/grapheneapi/api.py:197: in func<br/>    self.next()<br/>../../../lib/python3.7/site-packages/grapheneapi/api.py:131: in next<br/>    self.url = self.find_next()<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;bitsharesapi.bitsharesnoderpc.BitSharesNodeRPC object at 0x103b1d1d0&gt;<br/><br/>    def find_next(self):<br/>        &quot;&quot;&quot; Find the next url in the list<br/>        &quot;&quot;&quot;<br/>        if int(self.num_retries) &lt; 0:  # pragma: no cover<br/>            self._cnt_retries += 1<br/>            sleeptime = (self._cnt_retries - 1) * 2 if self._cnt_retries &lt; 10 else 10<br/>            if sleeptime:<br/>                log.warning(<br/>                    &quot;Lost connection to node during rpcexec(): %s (%d/%d) &quot;<br/>                    % (self.url, self._cnt_retries, self.num_retries)<br/>                    + &quot;Retrying in %d seconds&quot; % sleeptime<br/>                )<br/>                sleep(sleeptime)<br/>            return next(self.urls)<br/>    <br/>        urls = [<br/>            k<br/>            for k, v in self._url_counter.items()<br/>            if (<br/>                # Only provide URLS if num_retries is bigger equal 0,<br/>                # i.e. we want to do reconnects at all<br/>                int(self.num_retries) &gt;= 0<br/>                # the counter for this host/endpoint should be smaller than<br/>                # num_retries<br/>                and v &lt;= self.num_retries<br/>                # let&#x27;s not retry with the same URL *if* we have others<br/>                # available<br/>                and (k != self.url or len(self._url_counter) == 1)<br/>            )<br/>        ]<br/>        if not len(urls):<br/>&gt;           raise NumRetriesReached<br/><span class="error">E           grapheneapi.exceptions.NumRetriesReached</span><br/><br/>../../../lib/python3.7/site-packages/grapheneapi/api.py:112: NumRetriesReached<br/>------------------------------ Captured log call -------------------------------<br/>WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...
+WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...
+WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...
+WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...
+WARNING  grapheneapi.api:api.py:76 [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for &#x27;testnet.bts.dcn.cx&#x27;. (_ssl.c:1056)
+WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...
+WARNING  grapheneapi.api:api.py:76 [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for &#x27;testnet.bts.dcn.cx&#x27;. (_ssl.c:1056)
+WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...
+WARNING  grapheneapi.api:api.py:76 [Errno 60] Operation timed out
+WARNING  grapheneapi.api:api.py:76 [Errno 60] Operation timed out
+WARNING  grapheneapi.api:api.py:76 [Errno 60] Operation timed out
+WARNING  grapheneapi.api:api.py:76 [Errno 60] Operation timed out
+WARNING  grapheneapi.api:api.py:194 Object of type BitShares is not JSON serializable
+WARNING  grapheneapi.api:api.py:195 Reconnecting ...</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_account_total_value</td>
+          <td class="col-duration">0.58</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_balance</td>
+          <td class="col-duration">0.24</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_calculate_order_data</td>
+          <td class="col-duration">0.26</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_count_asset</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_allocated_assets</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_market_orders</td>
+          <td class="col-duration">0.44</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_order_cancellation_fee</td>
+          <td class="col-duration">0.15</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_order_creation_fee</td>
+          <td class="col-duration">0.12</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_updated_order</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_is_buy_order</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_is_current_market</td>
+          <td class="col-duration">0.06</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_is_sell_order</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_place_market_buy_order</td>
+          <td class="col-duration">1.43</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_retry_action</td>
+          <td class="col-duration">0.70</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_account</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_balances</td>
+          <td class="col-duration">0.08</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_market</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_convert_asset</td>
+          <td class="col-duration">3.48</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_convert_fee</td>
+          <td class="col-duration">0.70</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/orderengines/test_bitshares_engine.py::Test_BitsharesOrderEngine::test_get_order</td>
+          <td class="col-duration">0.36</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody></table></body></html>
