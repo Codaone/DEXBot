@@ -16,10 +16,12 @@ from bitsharesbase.chains import known_chains
 
 # Note: chain_id is generated from genesis.json, every time it's changes you need to get new chain_id from
 # `bitshares.rpc.get_chain_properties()`
+
 known_chains["TEST"]["chain_id"] = "c74ddb39b3a233445dd95d7b6fc2d0fa4ba666698db26b53855d94fffcc460af"
 
 PRIVATE_KEYS = ['5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3']
 DEFAULT_ACCOUNT = 'init0'
+
 
 # Example how to split conftest.py into multiple files
 # pytest_plugins = ['fixture_a.py', 'fixture_b.py']
@@ -129,6 +131,7 @@ def issue_asset(bitshares):
         asset = Asset(asset, bitshares_instance=bitshares)
         asset.issue(amount, to)
 
+
     return _issue_asset
 
 
@@ -138,6 +141,7 @@ def create_account(bitshares):
     """
 
     def _create_account(account):
+        Account.clear_cache()
         parent_account = Account(DEFAULT_ACCOUNT, bitshares_instance=bitshares)
         public_key = PublicKey.from_privkey(PRIVATE_KEYS[0], prefix=bitshares.prefix)
         bitshares.create_account(
@@ -187,9 +191,7 @@ def prepare_account(bitshares, unused_account, create_account, create_asset, iss
         # Account name is optional, take unused account name if not specified
         if not account:
             account = unused_account()
-
         create_account(account)
-
         for asset, amount in assets.items():
             # If asset does not exists, create it
             try:

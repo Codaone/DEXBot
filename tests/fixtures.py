@@ -129,5 +129,5 @@ def fixture_data(type=''):
 
 if __name__ == '__main__':
     print(fixture_data('RO'))
-    print(fixture_data('HK'))
+    print(fixture_data('KH'))
     print(fixture_data('OE'))

@@ -20,7 +20,6 @@ from bitshares.utils import formatTime
 
 from events import Events
 
-
 # Number of maximum retries used to retry action before failing
 MAX_TRIES = 3
 
@@ -54,7 +53,7 @@ class BitsharesOrderEngine(Storage, Events):
         self.bitshares = bitshares_instance or shared_bitshares_instance()
 
         # Dex instance used to get different fees for the market
-        self.dex = Dex(self.bitshares)
+        self.dex = Dex(bitshares_instance=self.bitshares)
 
         # Storage
         Storage.__init__(self, name)
@@ -155,7 +154,8 @@ class BitsharesOrderEngine(Storage, Events):
         for balance in self.balances:
             if balance['symbol'] != return_asset:
                 # Convert to asset if different
-                total_value += self.convert_asset(balance['amount'], balance['symbol'], return_asset)
+                total_value += self.convert_asset(balance['amount'], balance['symbol'], return_asset,
+                                                  bitshares_instance=self.bitshares)
             else:
                 total_value += balance['amount']
 
@@ -171,7 +171,8 @@ class BitsharesOrderEngine(Storage, Events):
                 total_value += self.convert_asset(
                     updated_order['base']['amount'],
                     updated_order['base']['symbol'],
-                    return_asset
+                    return_asset,
+                    bitshares_instance=self.bitshares
                 )
 
         return total_value
@@ -227,9 +228,11 @@ class BitsharesOrderEngine(Storage, Events):
 
         # Finally convert asset to another and return the sum
         if unit_of_measure == self.base_asset:
-            quote_total = self.convert_asset(quote_total, self.quote_asset, unit_of_measure)
+            quote_total = self.convert_asset(quote_total, self.quote_asset, unit_of_measure,
+                                             bitshares_instance=self.bitshares)
         elif unit_of_measure == self.quote_asset:
-            base_total = self.convert_asset(base_total, self.base_asset, unit_of_measure)
+            base_total = self.convert_asset(base_total, self.base_asset, unit_of_measure,
+                                            bitshares_instance=self.bitshares)
 
         # Fixme: Make sure that decimal precision is correct.
         return base_total + quote_total
@@ -618,7 +621,7 @@ class BitsharesOrderEngine(Storage, Events):
             **kwargs
         )
 
-        self.log.debug('Placed sell order {}'.format(sell_transaction))
+        # ￿ self.log.debug('Placed sell order {}'.format(sell_transaction))
         if return_order_id:
             sell_order = self.get_order(sell_transaction['orderid'], return_none=return_none)
             if sell_order and sell_order['deleted']:
@@ -707,9 +710,9 @@ class BitsharesOrderEngine(Storage, Events):
         # Refresh account data
         if refresh:
             self.account.refresh()
-
         for order in self.account.openorders:
-            if self.worker["market"] == order.market and self.account.openorders:
+
+            if self.config['workers']['worker1']['market'] == order.market and self.account.openorders:  # if self.worker["market"] == order.market and self.account.openorders:
                 orders.append(order)
 
         return orders
@@ -766,7 +769,7 @@ class BitsharesOrderEngine(Storage, Events):
         return order
 
     @staticmethod
-    def convert_asset(from_value, from_asset, to_asset):
+    def convert_asset(from_value, from_asset, to_asset, bitshares_instance=None):
         """ Converts asset to another based on the latest market value
 
             :param float | from_value: Amount of the input asset
@@ -774,7 +777,7 @@ class BitsharesOrderEngine(Storage, Events):
             :param string | to_asset: Symbol of the output asset
             :return: float Asset converted to another asset as float value
         """
-        market = Market('{}/{}'.format(from_asset, to_asset))
+        market = Market('{}/{}'.format(from_asset, to_asset), bitshares_instance=bitshares_instance)
         ticker = market.ticker()
         latest_price = ticker.get('latest', {}).get('price', None)
         precision = market['base']['precision']
@@ -797,7 +800,10 @@ class BitsharesOrderEngine(Storage, Events):
         else:
             if not self.core_exchange_rate:
                 # Determine how many fee_asset is needed for core-exchange
-                temp_market = Market(base=fee_asset, quote=Asset('1.3.0', bitshares_instance=self.bitshares))
+                # temp_market = Market(base=fee_asset, quote=Asset('1.3.0', bitshares_instance=self.bitshares))
+                temp_market = Market(base=Asset(fee_asset, bitshares_instance=self.bitshares),
+                                     quote=Asset('1.3.0', bitshares_instance=self.bitshares)
+                                     , bitshares_instance=self.bitshares)
                 self.core_exchange_rate = temp_market.ticker()['core_exchange_rate']
             return fee_amount * self.core_exchange_rate['base']['amount']
 
@@ -821,10 +827,12 @@ class BitsharesOrderEngine(Storage, Events):
             return None
         return order
 
-if __name__=='__main__':
-    from tests.fixtures import fixture_data 
+
+if __name__ == '__main__':
+    from tests.fixtures import fixture_data
     from bitshares import BitShares
     from bitshares.account import Account
+
     TEST_CONFIG = fixture_data('OE')
     bts = BitShares(TEST_CONFIG['node'])
     account = Account(
@@ -850,5 +858,5 @@ if __name__=='__main__':
         bitshares_bundle=None,
     )
 
-    r=oe.get_own_spread()
+    r = oe.get_own_spread()
     print(r)

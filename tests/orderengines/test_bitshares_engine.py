@@ -1,292 +1,343 @@
-import os
 import pytest
-from tests.fixtures import fixture_data
-from dexbot.orderengines.bitshares_engine import BitsharesOrderEngine
+from bitshares.dex import Dex
 from bitshares.account import Account
-from bitshares.market import Market
-from bitshares.price import Order
-from bitshares import BitShares
 from bitshares.asset import Asset
+from bitshares.price import Order
 
 
-class Test_BitsharesOrderEngine:
-    def setup_class(self):
-        # fixture
-        self.TEST_CONFIG = fixture_data('OE')
-        self.bts = BitShares(self.TEST_CONFIG['node'])
-        self.account = Account(
-            self.TEST_CONFIG['workers']['worker 1']['account']
-        )
-        assert self.account['name'] == 'dexbot-test4'
-        self.market_symbol = self.TEST_CONFIG['workers']['worker 1']['market']
-        assert self.market_symbol == 'TEST/DEXBOT'
-        self.base_symbol = self.market_symbol.split('/')[1]
-        assert self.base_symbol == 'DEXBOT'
-        self.quote_symbol = self.market_symbol.split('/')[0]
-        assert self.quote_symbol == 'TEST'
-        self.market = Market(self.market_symbol)
-        assert self.base_symbol == self.market['base']['symbol']
-        assert self.quote_symbol == self.market['quote']['symbol']
-        self.fee_asset = self.TEST_CONFIG['workers']['worker 1']['fee_asset']
-        self.fee_asset == 'TEST'
-        self.oe = BitsharesOrderEngine(
-            name='worker 1',
-            config=self.TEST_CONFIG,
-            account=self.account,
-            market=self.market,
-            fee_asset_symbol=self.fee_asset,
-            bitshares_instance=None,
-            bitshares_bundle=None,
-        )
+# 1. Todo: place_market_sell_order(), 621 line,modify  # self.log.debug('Placed sell order {}'.format(sell_transaction))
+# 2. Todo: convert_fee() 803 line, temp_market = Market(base=fee_asset, quote=Asset('1.3.0', bitshares_instance=self.bitshares))
+# temp_market = Market(base=Asset(fee_asset, bitshares_instance=self.bitshares),
+#                                      quote=Asset('1.3.0', bitshares_instance=self.bitshares)
+#                                      , bitshares_instance=self.bitshares)
+# 3. Todo:reason :set_shared_blockchain_instance
+#   1. Todo:777 line add bitshares_instance=bitshares
+#   2. Todo:770 line and ,bitshares_instance=None
+#   3. Todo:158 line add ,bitshares_instance=self.bitshares
+#   4. Todo:231 line add ,bitshares_instance=self.bitshares
+#   5. Todo:233 line add ,bitshares_instance=self.bitshares
+#   6. Todo:394 line add ,bitshares_instance=self.bitshares
+#   7. todo:56  line modify ,bitshares_instance=self.bitshares
 
-    def teardown_class(self):
-        pass
-
-    def setup_method(self):
-        pass
-
-    def teardown_method(self):
-        pass
-
-    def test_account_total_value(self):
-        from_value = self.account.balance(self.quote_symbol)
-        cv = BitsharesOrderEngine.convert_asset(
-            from_value, self.quote_symbol, self.base_symbol)
-        ncv = self.account.balance(self.base_symbol)
-        ors = self.account.openorders
-        if ors:
-            for o in ors:
-                if o['base']['symbol'] == self.base_symbol:
-                    ncv += o['base']['amount']
-                else:
-                    cv += BitsharesOrderEngine.convert_asset(
-                        o['base']['amount'],
-                        o['base']['symbol'],
-                        self.base_symbol)
-        cal = float(ncv + cv)
-        atv = self.oe.account_total_value(self.base_symbol)
-        assert round(atv, 4) == float(cal)
-
-    def test_balance(self):
-        value = self.account.balance(self.base_symbol)
-        test_balance = self.oe.balance(self.base_symbol)
-        assert value == test_balance
-        value = self.account.balance(self.quote_symbol)
-        test_balance = self.oe.balance(self.quote_symbol)
-        assert value == test_balance
-
-    def test_calculate_order_data(self):
-        order = Order("10 " + self.quote_symbol,
-                      "1 " + self.base_symbol)
-        amount = 10
-        price = 2
-        order = self.oe.calculate_order_data(order, amount, price)
-        assert 10 == order['quote']
-        assert 20 == order['base']
-        assert 2 == order['price']
-
-    def test_calculate_worker_value(self):
-        cwv = self.oe.calculate_worker_value(self.base_symbol)
-        cwv = self.oe.calculate_worker_value(self.quote_symbol)
-
-    def test_cancel_all_orders(self):
-        self.market.buy(0.1, 1)
-        assert self.account.openorders != []
-        self.oe.cancel_all_orders()
-        assert self.account.openorders == []
-
-    def test_cancel_orders(self):
-        self.market.buy(0.1, 1)
-        assert self.account.openorders != []
-        for o in self.account.openorders:
-            self.oe.cancel_orders(o)
-        assert self.account.openorders == []
-        self.market.buy(0.2, 1)
-        for o in self.account.openorders:
-            self.oe.cancel_orders(o, batch_only=True)
-        assert self.account.openorders == []
-
-    def test_count_asset(self):
-        if self.account.openorders == []:
-            self.market.buy(0.1, 1)
-        assert self.account.openorders != []
-
-        balance = self.account.balance(self.base_symbol)
-
-        s = 0
-        for o in self.account.openorders:
-            s += float(o['base'])
-        r = self.oe.count_asset(self.account.openorders, self.base_symbol)
-
-        assert balance + s == r['base']
-
-    def test_get_allocated_assets(self):
-        if self.account.openorders == []:
-            self.market.buy(0.1, 1)
-        assert self.account.openorders != []
-
-        s = 0
-        for o in self.account.openorders:
-            s += float(o['base'])
-        r = self.oe.get_allocated_assets(
-            self.account.openorders, self.base_symbol)
-
-        assert s == r['base']
-
-    def test_get_highest_own_buy_order(self, orders=None):
-        self.oe.cancel_all_orders()
-        ors = self.account.openorders
-        assert ors == []
-        if ors == []:
-            self.market.buy(0.1, 1)
-            self.market.buy(0.2, 1)
-        ors_id = []
-        for o in ors:
-            ors_id.append(o['id'])
-        r = self.oe.get_highest_own_buy_order(ors_id)
-        o = Order(r)
-        assert o['price'] == 0.2
-
-    def test_get_market_orders(self):
-        self.oe.cancel_all_orders()
-        if self.account.openorders == []:
-            self.market.buy(0.1, 1)
-        own = self.account.openorders
-        market_orders = self.oe.get_market_orders(depth=50, updated=True)
-        for o in own:
-            assert o in market_orders
-
-    def test_get_order_cancellation_fee(self):
-        fee = self.oe.get_order_cancellation_fee(self.base_symbol)
-        assert fee == 0
-        fee = self.oe.get_order_cancellation_fee(self.quote_symbol)
-        assert fee == 0
-
-    def test_get_order_creation_fee(self):
-        fee = self.oe.get_order_cancellation_fee(self.base_symbol)
-        assert fee == 0
-        fee = self.oe.get_order_cancellation_fee(self.quote_symbol)
-        assert fee == 0
-
-    def test_get_own_buy_orders(self):
-        orders = self.oe.get_own_buy_orders()
-
-    def test_get_own_sell_orders(self):
-        orders = self.oe.get_own_sell_orders()
-
-    def test_get_own_spread(self):
-        spread = self.oe.get_own_spread()
-
-    def test_get_updated_order(self):
-        if self.account.openorders == []:
-            self.market.buy(0.1, 1)
-        orders = self.account.openorders
-        for o in orders:
-            self.oe.get_updated_order(o['id'])
-
-    # def test_execute(self):
-    #     self.market.sell(0.1, 1)
-    #     self.oe.execute()
-
-    def test_is_buy_order(self):
-        if self.account.openorders == []:
-            self.market.buy(0.1, 1)
-        orders = self.account.openorders
-        for o in orders:
-            if o['base']['symbol'] == self.market['base']['symbol']:
-                r = self.oe.is_buy_order(o)
-                assert r == True
-
-    def test_is_current_market(self):
-        base_id = Asset(self.base_symbol)['id']
-        quote_id = Asset(self.quote_symbol)['id']
-        r = self.oe.is_current_market(base_id, quote_id)
-        assert r == True
-        r = self.oe.is_current_market(quote_id, base_id)
-        assert r == True
-        r = self.oe.is_current_market('CNY', 'USD')
-        assert r == False
-
-    def test_is_sell_order(self):
-        if self.account.openorders == []:
-            self.market.sell(0.1, 1)
-        orders = self.account.openorders
-        for o in orders:
-            if o['base']['symbol'] == self.market['quote']['symbol']:
-                r = self.oe.is_sell_order(o)
-                assert r == True
-
-    def test_place_market_buy_order(self):
-        r = self.oe.place_market_buy_order(10, 1)
-        assert r['price'] == 1
-        assert r['quote']['amount'] == 10
-
-    def test_place_market_sell_order(self):
-        r = self.oe.place_market_sell_order(10, 1)
-        assert r['price'] == 1
-        assert r['quote']['amount'] == 10
-
-    def test_retry_action(self):
-        self.oe.retry_action(self.market.buy, 1, 10)
-        self.oe.retry_action(self.market.sell, 1, 10)
-
-    def test_account(self):
-        acc = self.oe.account
-        assert acc == self.account
-
-    def test_balances(self):
-        r = self.oe.balances
-        for b in r:
-            if b['symbol'] == self.base_symbol:
-                a = self.account.balance(self.base_symbol)
-                assert b == a
-            if b['symbol'] == self.quote_symbol:
-                a = self.account.balance(self.quote_symbol)
-                assert b == a
-
-    def test_get_all_own_orders(self):
-        r = self.oe.get_own_orders()
-
-    def test_all_own_orders(self):
-        self.oe.all_own_orders()
-
-    def test_own_orders(self):
-        self.oe.own_orders()
-
-    def test_market(self):
-        market = self.oe.market
-        assert market['base']['symbol'] == self.base_symbol
-        assert market['quote']['symbol'] == self.quote_symbol
-
-    def test_get_updated_limit_order(self):
-        ors = self.account.openorders
-        for o in ors:
-            r = self.oe.get_updated_limit_order(o)
-            assert r['price'] == o['price']
-
-    def test_convert_asset(self):
-        ticker = self.market.ticker()
-        lp = ticker.get('latest', {}).get('price', None)
-        r = self.oe.convert_asset(10, self.base_symbol, self.quote_symbol)
-        assert lp * 10 == r
-
-    def test_convert_fee(self):
-        c = self.market.ticker()['core_exchange_rate']
-        r = self.oe.convert_fee(1, self.base_symbol)
-
-        assert float(c) == r
-
-    def test_get_order(self):
-        ors = self.account.openorders
-        for o in ors:
-            r = self.oe.get_order(o['id'])
-            assert r['price'] == o['price']
-            assert r['base'] == o['base']
-            assert r['quote'] == o['quote']
+# 4. Todo:215 line self.base_asset Incorrect value
+# 5. Todo:217 line self.quote_asset Incorrect value
+# 6. todo:715 line if self.config['workers']['worker1']['market'] == order.market and self.account.openorders:
+# 7. todo:429 line return self.filter_sell_orders(orders)  ,can'find filter_sell_orders()
+# 8. todo:418 line return self.filter_buy_orders(orders) ,can'find filter_sell_orders()
+# 9. todo:763 line copy.deepcopy()
+# 10. todo:822 line order = Order(order_id, bitshares_instance=self.bitshares)
+def test_balance(bitshares, accounts):
+    a = Account('worker1', bitshares_instance=bitshares)
+    assert a.balance('MYBASE') == 10000
+    assert a.balance('MYQUOTE') == 2000
+    assert a.balance('TEST') == 10000
 
 
-if __name__ == '__main__':
-    cur_dir = os.path.dirname(__file__)
-    test_file = os.path.join(cur_dir, 'test_bitshares_engine.py')
-    print(test_file)
-    pytest.main(['--capture=no', test_file])
+def test_asset_base(bitshares, assets):
+    a = Asset('MYBASE', full=True, bitshares_instance=bitshares)
+    assert a['dynamic_asset_data']['current_supply'] > 1000
+
+
+def test_asset_quote(bitshares, assets):
+    a = Asset('MYQUOTE', full=True, bitshares_instance=bitshares)
+    assert a['dynamic_asset_data']['current_supply'] > 1000
+
+
+def test_account_total_value(order_engines):
+    a = order_engines.balance(order_engines.market['base']['symbol'])
+    atv = order_engines.account_total_value(order_engines.market['base']['symbol'])
+    assert atv == a
+
+
+def test_account_total_value(order_engines, orders1):
+    a = order_engines.balance(order_engines.market['base']['symbol'])
+    atv = order_engines.account_total_value(order_engines.market['base']['symbol'])
+    assert atv != a
+
+
+def test_calculate_order_data(order_engines):
+    base = order_engines.market['base']['symbol']
+    quote = order_engines.market['quote']['symbol']
+
+    order = Order("10 " + base, "1 " + quote, bitshares_instance=order_engines.bitshares)
+    amount = 10
+    price = 2
+    order = order_engines.calculate_order_data(order, amount, price)
+    assert 10 == order['quote']
+    assert 20 == order['base']
+    assert 2 == order['price']
+
+
+def test_calculate_worker_value(order_engines):
+    cwv = order_engines.calculate_worker_value(order_engines.market['base']['symbol'])
+    assert cwv > 1000
+    cwv = order_engines.calculate_worker_value(order_engines.market['quote']['symbol'])
+    assert cwv > 2000
+
+
+
+def test_cancel_all_orders(order_engines):
+    o = order_engines.place_market_buy_order(1, 1, returnOrderId=True)
+
+    assert order_engines.account.openorders != []
+    order_engines.cancel_all_orders()
+    order_engines.account.refresh()
+    assert order_engines.account.openorders == []
+
+
+def test_cancel_orders(order_engines):
+    for i in range(1, 10):
+        order_engines.place_market_buy_order(1 + i, 1, returnOrderId=True)
+    assert order_engines.account.openorders != []
+    for o in order_engines.account.openorders:
+        order_engines.cancel_orders(o)
+    order_engines.account.refresh()
+    assert order_engines.account.openorders == []
+
+
+def test_count_asset(order_engines):
+    if order_engines.account.openorders == []:
+        order_engines.place_market_buy_order(1, 10, returnOrderId=True)
+
+    order_engines.account.refresh()
+
+    assert order_engines.account.openorders != []
+
+    balance = order_engines.account.balance(order_engines.market['base']['symbol'])
+
+    s = 0
+    for o in order_engines.account.openorders:
+        s += float(o['base'])
+    r = order_engines.count_asset(order_engines.account.openorders, order_engines.market['base']['symbol'])
+
+    assert balance + s == r['base']
+
+
+def test_get_allocated_assets(order_engines):
+    if order_engines.account.openorders == []:
+        order_engines.place_market_buy_order(1, 1)
+    order_engines.account.refresh()
+    assert order_engines.account.openorders != []
+
+    s = 0
+    for o in order_engines.account.openorders:
+        s += float(o['base'])
+    r = order_engines.get_allocated_assets(
+        order_engines.account.openorders, order_engines.market['base']['symbol'])
+
+    assert s == r['base']
+
+
+def test_get_highest_own_buy_order(order_engines):
+    ors = order_engines.account.openorders
+    assert ors == []
+    if ors == []:
+        order_engines.place_market_buy_order(1, 1)
+        order_engines.place_market_buy_order(1, 2)
+        order_engines.place_market_buy_order(1, 3)
+    order_engines.account.refresh()
+    ors = order_engines.account.openorders
+    o = order_engines.get_highest_own_buy_order(ors)
+    assert o['price'] == 3
+
+
+def test_get_market_orders(order_engines):
+    order_engines.place_market_buy_order(1, 10)
+    order_engines.account.refresh()
+    own = order_engines.account.openorders
+    market_orders = order_engines.get_market_orders(depth=50, updated=True)
+    for o in own:
+        assert o in market_orders
+
+
+def test_get_order_cancellation_fee(order_engines):
+    dex = Dex(bitshares_instance=order_engines.bitshares)
+    fees = dex.returnFees()
+
+    limit_order_cancel = fees['limit_order_cancel']['fee']
+    fee = order_engines.get_order_cancellation_fee(order_engines.market['base']['symbol'])
+    assert fee == limit_order_cancel
+    fee = order_engines.get_order_cancellation_fee(order_engines.market['base']['symbol'])
+    assert fee == limit_order_cancel
+    fee = order_engines.get_order_cancellation_fee('TEST')
+    assert fee == limit_order_cancel
+    assert fee == limit_order_cancel
+
+
+def test_get_order_creation_fee(order_engines):
+    dex = Dex(bitshares_instance=order_engines.bitshares)
+    fees = dex.returnFees()
+
+    limit_order_create = fees['limit_order_create']['fee']
+    fee = order_engines.get_order_creation_fee(order_engines.market['base']['symbol'])
+    assert fee == limit_order_create
+    fee = order_engines.get_order_creation_fee(order_engines.market['base']['symbol'])
+    assert fee == limit_order_create
+
+
+def test_get_own_buy_orders(order_engines, order_buy):
+    orders = order_engines.account.openorders
+
+    assert orders != []
+    r = order_engines.get_own_buy_orders()
+
+    assert orders == r
+
+
+def test_get_own_sell_orders(order_engines, order_sell):
+    sells = order_engines.account.openorders
+
+    assert sells != []
+
+    orders = order_engines.get_own_sell_orders()
+
+    assert orders == sells
+
+
+def test_get_own_spread(order_engines, orders1):
+    spread = order_engines.get_own_spread()
+
+    assert spread == 2 / 1 - 1
+
+
+def test_get_updated_order(order_engines, order_part_filled):
+    orders = order_engines.account.openorders
+    for o in orders:
+        c = order_engines.get_updated_order(o['id'])
+        assert c == o
+
+
+def test_execute(order_engines):
+    # assert order_engines.account.openorders == []
+    # order_engines.bitshares.blocking = "head"
+    # assert order_engines.bitshares.blocking == "head"
+    # order_engines.place_market_sell_order(20, 1.5)
+    # order_engines.place_market_buy_order(10, 1.2)
+    # order_engines.account.refresh()
+    # assert order_engines.account.openorders != []
+    # order_engines.execute()
+    # assert order_engines.bitshares.blocking == False
+    pass
+
+
+def test_is_buy_order(order_engines, orders1):
+    orders = order_engines.account.openorders
+    for o in orders:
+        if o['base']['symbol'] == order_engines.market['base']['symbol']:
+            r = order_engines.is_buy_order(o)
+            assert r == True
+
+
+def test_is_current_market(order_engines):
+    base_id = Asset(order_engines.market['base']['symbol'], bitshares_instance=order_engines.bitshares)['id']
+    quote_id = Asset(order_engines.market['quote']['symbol'], bitshares_instance=order_engines.bitshares)['id']
+
+    r = order_engines.is_current_market(base_asset_id=base_id, quote_asset_id=quote_id)
+    assert r == True
+    r = order_engines.is_current_market(quote_asset_id=quote_id, base_asset_id=base_id)
+    assert r == True
+    r = order_engines.is_current_market('CNY', 'USD')
+    assert r == False
+
+
+def test_is_sell_order(order_engines, orders1):
+    orders = order_engines.get_all_own_orders()
+    for o in orders:
+        if o['base']['symbol'] == order_engines.market['quote']['symbol']:
+            r = order_engines.is_sell_order(o)
+            assert r == True
+
+
+def test_place_market_buy_order(order_engines):
+    o = order_engines.place_market_buy_order(10, 1)
+    assert o['price'] == 1
+    assert o['quote']['amount'] == 10
+
+
+def test_place_market_sell_order(order_engines):
+    o = order_engines.place_market_sell_order(10, 1)
+    assert o['price'] == 1
+    assert o['quote']['amount'] == 10
+
+
+def test_retry_action(order_engines):
+    r = order_engines.retry_action(order_engines.place_market_buy_order, 10, 1.1)
+
+    order_engines.retry_action(order_engines.place_market_sell_order, 10, 2.2)
+
+    order_engines.retry_action(order_engines.place_market_sell_order, 10, -1)
+
+    order_engines.retry_action(order_engines.place_market_sell_order, -1, -1)
+
+
+def test_account(order_engines, account_name):
+    a = order_engines.account
+    assert a.name == account_name
+
+
+def test_balances(order_engines):
+    base = order_engines.market['base']['symbol']
+    quote = order_engines.market['quote']['symbol']
+    r = order_engines.balances
+    for b in r:
+        if b['symbol'] == base:
+            a = order_engines.account.balance(base)
+            assert b == a
+        if b['symbol'] == quote:
+            a = order_engines.account.balance(quote)
+            assert b == a
+
+
+def test_get_all_own_orders(order_engines, orders1):
+    orders = order_engines.get_all_own_orders()
+    for o in orders:
+        if o['base']['symbol'] == order_engines.market['base']['symbol']:
+            assert o['price'] == 1
+
+
+def test_all_own_orders(order_engines, orders1):
+    orders = order_engines.all_own_orders
+    for o in orders:
+        if o['base']['symbol'] == order_engines.market['base']['symbol']:
+            assert o['price'] == 1
+
+
+def test_own_orders(order_engines, orders1):
+    orders = order_engines.account.openorders
+    r = order_engines.own_orders
+
+    assert orders == r
+
+
+def test_market(order_engines, symbol):
+    assert order_engines.market['base']['symbol'] == symbol.split('/')[1]
+    assert order_engines.market['quote']['symbol'] == symbol.split('/')[0]
+
+
+def test_get_updated_limit_order(order_engines, orders1):
+    ors = order_engines.get_all_own_orders()
+
+
+def test_convert_asset(order_engines, orders1):
+    r = order_engines.convert_asset(10, order_engines.market['base']['symbol'], order_engines.market['quote']['symbol'],
+                                    bitshares_instance=order_engines.bitshares)
+    assert r == 5
+
+
+def test_convert_fee(order_engines):
+    c = order_engines.market.ticker()['core_exchange_rate']
+
+    r = order_engines.convert_fee(1, order_engines.market['base']['symbol'])
+
+    assert float(c) == r
+
+
+def test_get_order(order_engines, orders1):
+    ors = order_engines.account.openorders
+
+    for o in ors:
+        r = order_engines.get_order(o['id'], return_none=False)
+        # deleted
+        assert r['price'] == o['price']
+        assert r['base'] == o['base']
+        assert r['quote'] == o['quote']
