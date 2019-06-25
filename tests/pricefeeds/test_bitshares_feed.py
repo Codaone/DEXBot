@@ -93,7 +93,6 @@ def test_filter_buy_orders(bitshares_feed, orders1):
     assert operator.eq(desc, desc_orders_prices)
 
 
-# @pytest.mark.xfail(reason='order.invert()-->graphenecommon/blockchainobject.py:262 self.refresh()')
 def test_filter_sell_orders(bitshares_feed, orders1):
     sell_orders = bitshares_feed.get_market_sell_orders(depth=10)
 
@@ -133,7 +132,6 @@ def test_get_highest_market_buy_order(bitshares_feed, orders1):
     assert max_price == highest['price']
 
 
-# @pytest.mark.xfail(reason='order.invert()-->graphenecommon/blockchainobject.py:262 self.refresh()')
 def test_get_lowest_market_sell_order(bitshares_feed, orders1):
     sell_orders = bitshares_feed.get_market_sell_orders(depth=10)
     price_list = []
@@ -152,7 +150,6 @@ def test_get_market_buy_orders(bitshares_feed, orders1):
         assert o['base']['symbol'] == bitshares_feed.market['base']['symbol']
 
 
-# @pytest.mark.xfail(reason='order.invert()-->graphenecommon/blockchainobject.py:262 self.refresh()')
 def test_get_market_sell_orders(bitshares_feed, orders1):
     os = bitshares_feed.get_limit_orders()
     for order in os:
@@ -161,6 +158,7 @@ def test_get_market_sell_orders(bitshares_feed, orders1):
 
     sell_orders = bitshares_feed.get_market_sell_orders(depth=1)
     for o in sell_orders:
+        o.invert()
         assert o['base']['symbol'] == bitshares_feed.market['quote']['symbol']
 
 

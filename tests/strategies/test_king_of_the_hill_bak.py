@@ -60,5 +60,5 @@ if __name__ == '__main__':
     import os
     import pytest
     cur_dir = os.path.dirname(__file__)
-    test_file = os.path.join(cur_dir, 'test_king_of_the_hill.py')
+    test_file = os.path.join(cur_dir, 'test_king_of_the_hill_bak.py')
     pytest.main(['--capture=no', test_file])

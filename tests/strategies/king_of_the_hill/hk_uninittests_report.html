@@ -397,25 +397,25 @@ function filter_table(elem) {
     not_found_message.hidden = !all_rows_hidden;
 }
 </script>
-    <h1>kh_report.html</h1>
-    <p>Report generated on 24-May-2019 at 14:07:16 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v1.20.0</p>
+    <h1>report.html</h1>
+    <p>Report generated on 25-Jun-2019 at 16:08:28 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v1.20.0</p>
     <h2>Environment</h2>
     <table id="environment">
       <tr>
         <td>Packages</td>
-        <td>{&apos;pytest&apos;: &apos;4.5.0&apos;, &apos;py&apos;: &apos;1.8.0&apos;, &apos;pluggy&apos;: &apos;0.11.0&apos;}</td></tr>
+        <td>{&apos;pytest&apos;: &apos;4.4.0&apos;, &apos;py&apos;: &apos;1.8.0&apos;, &apos;pluggy&apos;: &apos;0.12.0&apos;}</td></tr>
       <tr>
         <td>Platform</td>
-        <td>Darwin-17.7.0-x86_64-i386-64bit</td></tr>
+        <td>Darwin-18.6.0-x86_64-i386-64bit</td></tr>
       <tr>
         <td>Plugins</td>
-        <td>{&apos;metadata&apos;: &apos;1.8.0&apos;, &apos;html&apos;: &apos;1.20.0&apos;}</td></tr>
+        <td>{&apos;html&apos;: &apos;1.20.0&apos;, &apos;instafail&apos;: &apos;0.4.1&apos;, &apos;metadata&apos;: &apos;1.8.0&apos;, &apos;pep8&apos;: &apos;1.0.6&apos;}</td></tr>
       <tr>
         <td>Python</td>
         <td>3.7.2</td></tr></table>
     <h2>Summary</h2>
-    <p>8 tests ran in 4.50 seconds. </p>
-    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">4 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">4 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <p>11 tests ran in 16.08 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">7 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">4 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
     <h2>Results</h2>
     <table id="results-table">
       <thead id="results-table-head">
@@ -429,46 +429,55 @@ function filter_table(elem) {
       <tbody class="failed results-table-row">
         <tr>
           <td class="col-result">Failed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_maintain_strategy</td>
-          <td class="col-duration">0.03</td>
-          <td class="col-links"></td></tr>
-        <tr>
-          <td class="extra" colspan="4">
-            <div class="log">self = &lt;test_king_of_the_hill.Test_Strategy object at 0x105bc7898&gt;<br/><br/>    def test_maintain_strategy(self):<br/>&gt;       self.kh.maintain_strategy()<br/><br/>test_king_of_the_hill.py:24: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/strategies/king_of_the_hill.py:123: in maintain_strategy<br/>    self.calc_order_prices()<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}<br/><br/>    def calc_order_prices(self):<br/>        &quot;&quot;&quot; Calculate prices of our orders<br/>        &quot;&quot;&quot;<br/>        # Obtain orderbook orders excluding our orders<br/>        market_orders = self.get_market_orders(depth=100)<br/>&gt;       own_orders_ids = [order[&#x27;id&#x27;] for order in self.get_own_orders]<br/><span class="error">E       TypeError: &#x27;method&#x27; object is not iterable</span><br/><br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/strategies/king_of_the_hill.py:183: TypeError<br/>---------------------------- Captured stderr setup -----------------------------<br/>2019-05-24 14:07:13,198 __init__ 65  : Initializing King of the Hill...
-2019-05-24 14:07:13,258 __init__ 113  : King of the Hill initialized.
------------------------------- Captured log setup ------------------------------<br/>INFO     dexbot.per_worker:king_of_the_hill.py:65 Initializing King of the Hill...
-INFO     dexbot.per_worker:king_of_the_hill.py:113 King of the Hill initialized.</div></td></tr></tbody>
-      <tbody class="failed results-table-row">
-        <tr>
-          <td class="col-result">Failed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_calc_order_prices</td>
-          <td class="col-duration">0.06</td>
-          <td class="col-links"></td></tr>
-        <tr>
-          <td class="extra" colspan="4">
-            <div class="log">self = &lt;test_king_of_the_hill.Test_Strategy object at 0x105b39eb8&gt;<br/><br/>    def test_calc_order_prices(self):<br/>&gt;       self.kh.calc_order_prices()<br/><br/>test_king_of_the_hill.py:41: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}<br/><br/>    def calc_order_prices(self):<br/>        &quot;&quot;&quot; Calculate prices of our orders<br/>        &quot;&quot;&quot;<br/>        # Obtain orderbook orders excluding our orders<br/>        market_orders = self.get_market_orders(depth=100)<br/>&gt;       own_orders_ids = [order[&#x27;id&#x27;] for order in self.get_own_orders]<br/><span class="error">E       TypeError: &#x27;method&#x27; object is not iterable</span><br/><br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/strategies/king_of_the_hill.py:183: TypeError<br/></div></td></tr></tbody>
-      <tbody class="failed results-table-row">
-        <tr>
-          <td class="col-result">Failed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_place_order</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_maintain_strategy[config0]</td>
           <td class="col-duration">0.00</td>
           <td class="col-links"></td></tr>
         <tr>
           <td class="extra" colspan="4">
-            <div class="log">self = &lt;test_king_of_the_hill.Test_Strategy object at 0x1060f0198&gt;<br/><br/>    def test_place_order(self):<br/>&gt;       self.kh.place_order(&#x27;buy&#x27;)<br/><br/>test_king_of_the_hill.py:45: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/strategies/king_of_the_hill.py:230: in place_order<br/>    if not self.buy_price:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}, name = &#x27;buy_price&#x27;<br/><br/>    def __getattr__(self, name):<br/>        if name.startswith(&#x27;__&#x27;):<br/>            raise AttributeError(&quot;type object &#x27;%s&#x27; has no attribute &#x27;%s&#x27;&quot; %<br/>                                 (self.__class__.__name__, name))<br/>    <br/>        if hasattr(self, &#x27;__events__&#x27;):<br/>            if name not in self.__events__:<br/>&gt;               raise EventsException(&quot;Event &#x27;%s&#x27; is not declared&quot; % name)<br/><span class="error">E               events.events.EventsException: Event &#x27;buy_price&#x27; is not declared</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:58: EventsException<br/></div></td></tr></tbody>
+            <div class="log">kh = {}<br/><br/>    def test_maintain_strategy(kh):<br/>    <br/>&gt;       kh.maintain_strategy()<br/><br/>tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py:42: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>../lib/python3.7/site-packages/dexbot-0.11.11-py3.7.egg/dexbot/strategies/king_of_the_hill.py:124: in maintain_strategy<br/>    self.calc_order_prices()<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}<br/><br/>    def calc_order_prices(self):<br/>        &quot;&quot;&quot; Calculate prices of our orders<br/>        &quot;&quot;&quot;<br/>        # Obtain orderbook orders excluding our orders<br/>        market_orders = self.get_market_orders(depth=100)<br/>&gt;       own_orders_ids = [order[&#x27;id&#x27;] for order in self.get_own_orders]<br/><span class="error">E       TypeError: &#x27;method&#x27; object is not iterable</span><br/><br/>../lib/python3.7/site-packages/dexbot-0.11.11-py3.7.egg/dexbot/strategies/king_of_the_hill.py:184: TypeError<br/>------------------------------ Captured log setup ------------------------------<br/>king_of_the_hill.py         65 INFO     Initializing King of the Hill...
+king_of_the_hill.py        114 INFO     King of the Hill initialized.</div></td></tr></tbody>
       <tbody class="failed results-table-row">
         <tr>
           <td class="col-result">Failed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_place_orders</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_calc_order_prices[config0]</td>
+          <td class="col-duration">0.01</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">other_orders = None, kh = {}, orders1 = None<br/><br/>    def test_calc_order_prices(other_orders, kh, orders1):<br/>    <br/>        print(&#x27;进入函数！&#x27;)<br/>        orders = kh.own_orders<br/>        print(&#x27;own_orders:&#x27;, orders)<br/>        buys = kh.filter_buy_orders(orders)<br/>        print(&#x27;buys:&#x27;, buys)<br/>        sells = kh.filter_sell_orders(orders, invert=True)<br/>        print(&#x27;sells:&#x27;, sells)<br/>&gt;       kh.calc_order_prices()<br/><br/>tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py:68: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}<br/><br/>    def calc_order_prices(self):<br/>        &quot;&quot;&quot; Calculate prices of our orders<br/>        &quot;&quot;&quot;<br/>        # Obtain orderbook orders excluding our orders<br/>        market_orders = self.get_market_orders(depth=100)<br/>&gt;       own_orders_ids = [order[&#x27;id&#x27;] for order in self.get_own_orders]<br/><span class="error">E       TypeError: &#x27;method&#x27; object is not iterable</span><br/><br/>../lib/python3.7/site-packages/dexbot-0.11.11-py3.7.egg/dexbot/strategies/king_of_the_hill.py:184: TypeError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_place_order[config0]</td>
           <td class="col-duration">0.00</td>
           <td class="col-links"></td></tr>
         <tr>
           <td class="extra" colspan="4">
-            <div class="log">self = &lt;test_king_of_the_hill.Test_Strategy object at 0x105bf9dd8&gt;<br/><br/>    def test_place_orders(self):<br/>&gt;       self.kh.place_orders()<br/><br/>test_king_of_the_hill.py:48: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/strategies/king_of_the_hill.py:293: in place_orders<br/>    self.place_order(&#x27;buy&#x27;)<br/>/Users/mac/envd/lib/python3.7/site-packages/dexbot-0.11.4-py3.7.egg/dexbot/strategies/king_of_the_hill.py:230: in place_order<br/>    if not self.buy_price:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}, name = &#x27;buy_price&#x27;<br/><br/>    def __getattr__(self, name):<br/>        if name.startswith(&#x27;__&#x27;):<br/>            raise AttributeError(&quot;type object &#x27;%s&#x27; has no attribute &#x27;%s&#x27;&quot; %<br/>                                 (self.__class__.__name__, name))<br/>    <br/>        if hasattr(self, &#x27;__events__&#x27;):<br/>            if name not in self.__events__:<br/>&gt;               raise EventsException(&quot;Event &#x27;%s&#x27; is not declared&quot; % name)<br/><span class="error">E               events.events.EventsException: Event &#x27;buy_price&#x27; is not declared</span><br/><br/>../../../lib/python3.7/site-packages/events/events.py:58: EventsException<br/></div></td></tr></tbody>
+            <div class="log">kh = {}<br/><br/>    def test_place_order(kh):<br/>&gt;       print(kh.buy_price)<br/><br/>tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py:83: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}, name = &#x27;buy_price&#x27;<br/><br/>    def __getattr__(self, name):<br/>        if name.startswith(&#x27;__&#x27;):<br/>            raise AttributeError(&quot;type object &#x27;%s&#x27; has no attribute &#x27;%s&#x27;&quot; %<br/>                                 (self.__class__.__name__, name))<br/>    <br/>        if hasattr(self, &#x27;__events__&#x27;):<br/>            if name not in self.__events__:<br/>&gt;               raise EventsException(&quot;Event &#x27;%s&#x27; is not declared&quot; % name)<br/><span class="error">E               events.events.EventsException: Event &#x27;buy_price&#x27; is not declared</span><br/><br/>../lib/python3.7/site-packages/events/events.py:58: EventsException<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_place_orders[config0]</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">kh = {}<br/><br/>    def test_place_orders(kh):<br/>&gt;       kh.place_orders()<br/><br/>tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py:93: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>../lib/python3.7/site-packages/dexbot-0.11.11-py3.7.egg/dexbot/strategies/king_of_the_hill.py:302: in place_orders<br/>    self.place_order(&#x27;buy&#x27;)<br/>../lib/python3.7/site-packages/dexbot-0.11.11-py3.7.egg/dexbot/strategies/king_of_the_hill.py:236: in place_order<br/>    if not self.buy_price:<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = {}, name = &#x27;buy_price&#x27;<br/><br/>    def __getattr__(self, name):<br/>        if name.startswith(&#x27;__&#x27;):<br/>            raise AttributeError(&quot;type object &#x27;%s&#x27; has no attribute &#x27;%s&#x27;&quot; %<br/>                                 (self.__class__.__name__, name))<br/>    <br/>        if hasattr(self, &#x27;__events__&#x27;):<br/>            if name not in self.__events__:<br/>&gt;               raise EventsException(&quot;Event &#x27;%s&#x27; is not declared&quot; % name)<br/><span class="error">E               events.events.EventsException: Event &#x27;buy_price&#x27; is not declared</span><br/><br/>../lib/python3.7/site-packages/events/events.py:58: EventsException<br/></div></td></tr></tbody>
       <tbody class="passed results-table-row">
         <tr>
           <td class="col-result">Passed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_check_orders</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_worker_balance</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">------------------------------ Captured log setup ------------------------------<br/>api.py                      76 WARNING  Connection is already closed.
+api.py                      76 WARNING  Connection is already closed.
+api.py                      91 WARNING  Lost connection to node during rpcexec(): ws://127.0.0.1:55238 (2/-1) Retrying in 2 seconds</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_asset_base</td>
           <td class="col-duration">0.00</td>
           <td class="col-links"></td></tr>
         <tr>
@@ -477,32 +486,45 @@ INFO     dexbot.per_worker:king_of_the_hill.py:113 King of the Hill initialized.
       <tbody class="passed results-table-row">
         <tr>
           <td class="col-result">Passed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_get_order_type</td>
-          <td class="col-duration">2.58</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_asset_quote</td>
+          <td class="col-duration">0.00</td>
           <td class="col-links"></td></tr>
         <tr>
           <td class="extra" colspan="4">
-            <div class="log">----------------------------- Captured stderr call -----------------------------<br/>2019-05-24 14:07:15,346 test_get_order_type 33  : Order created:1.7.781672
-2019-05-24 14:07:16,019 test_get_order_type 38  : Cancel order:1.7.781672
------------------------------- Captured log call -------------------------------<br/>INFO     root:test_king_of_the_hill.py:33 Order created:1.7.781672
-INFO     root:test_king_of_the_hill.py:38 Cancel order:1.7.781672</div></td></tr></tbody>
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
       <tbody class="passed results-table-row">
         <tr>
           <td class="col-result">Passed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_amount_quote</td>
-          <td class="col-duration">0.04</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_check_orders[config0]</td>
+          <td class="col-duration">0.00</td>
           <td class="col-links"></td></tr>
         <tr>
           <td class="extra" colspan="4">
-            <div class="log">----------------------------- Captured stderr call -----------------------------<br/>2019-05-24 14:07:16,182 test_amount_quote 52  : 0.1
------------------------------- Captured log call -------------------------------<br/>INFO     root:test_king_of_the_hill.py:52 0.1</div></td></tr></tbody>
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
       <tbody class="passed results-table-row">
         <tr>
           <td class="col-result">Passed</td>
-          <td class="col-name">tests/strategies/test_king_of_the_hill.py::Test_Strategy::test_amount_base</td>
-          <td class="col-duration">0.05</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_get_order_type[config0]</td>
+          <td class="col-duration">0.01</td>
           <td class="col-links"></td></tr>
         <tr>
           <td class="extra" colspan="4">
-            <div class="log">----------------------------- Captured stderr call -----------------------------<br/>2019-05-24 14:07:16,235 test_amount_base 56  : 10.0
------------------------------- Captured log call -------------------------------<br/>INFO     root:test_king_of_the_hill.py:56 10.0</div></td></tr></tbody></table></body></html>
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_amount_quote[config0]</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/strategies/king_of_the_hill/test_king_of_the_hill_unittests.py::test_amount_base[config0]</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody></table></body></html>

@@ -27,9 +27,9 @@ class Strategy(StrategyBase):
         return StrategyBase.configure(return_base_config) + [
             ConfigElement('mode', 'choice', 'both', 'Mode',
                           'Operational mode', ([
-                              ('both', 'Buy + sell'),
-                              ('buy', 'Buy only'),
-                              ('sell', 'Sell only')])),
+                    ('both', 'Buy + sell'),
+                    ('buy', 'Buy only'),
+                    ('sell', 'Sell only')])),
             ConfigElement('lower_bound', 'float', 0, 'Lower bound',
                           'Do not place sell orders lower than this bound',
                           (0, 10000000, 8, '')),
@@ -92,7 +92,8 @@ class Strategy(StrategyBase):
         self.upper_bound = self.worker.get('upper_bound', 0)
         self.lower_bound = self.worker.get('lower_bound', 0)
         self.min_order_lifetime = self.worker.get('min_order_lifetime', 1)
-
+        # self.buy_price = None
+        # self.sell_price = None
         self.orders = []
         # Current order we must be higher
         self.buy_order_to_beat = None
@@ -151,8 +152,8 @@ class Strategy(StrategyBase):
                 # Check if someone put order above ours or beaten order was canceled
                 elif ((order_type == 'buy' and (not self.get_order(self.beaten_buy_order) or
                                                 stored_order['price'] < self.buy_price)) or
-                        (order_type == 'sell' and (not self.get_order(self.beaten_sell_order) or
-                                                   stored_order['price'] ** -1 > self.sell_price))):
+                      (order_type == 'sell' and (not self.get_order(self.beaten_sell_order) or
+                                                 stored_order['price'] ** -1 > self.sell_price))):
                     self.log.debug('Moving {} order'.format(order_type))
                     self.cancel_orders(order)
                     orders_to_delete.append(stored_order['id'])
@@ -181,11 +182,14 @@ class Strategy(StrategyBase):
         # Obtain orderbook orders excluding our orders
         market_orders = self.get_market_orders(depth=100)
         own_orders_ids = [order['id'] for order in self.get_own_orders]
+        print(own_orders_ids)
         market_orders = [
             order for order in market_orders if order['id'] not in own_orders_ids]
+        print('market_orders:', market_orders)
         buy_orders = self.filter_buy_orders(market_orders)
         sell_orders = self.filter_sell_orders(market_orders, invert=True)
-
+        print('buy_orders:', buy_orders)
+        print('sell_orders:', sell_orders)
         # xxx_order_size_threshold indicates order price we need to beat
         sell_order_size_threshold = self.sell_order_size_threshold
         if not sell_order_size_threshold:
@@ -200,10 +204,11 @@ class Strategy(StrategyBase):
             if order['quote']['amount'] > sell_order_size_threshold:
                 # Calculate price to beat order by slightly decreasing BASE amount
                 new_base = order['base']['amount'] - 2 * \
-                    10 ** -self.market['base']['precision']
+                           10 ** -self.market['base']['precision']
                 # Don't let to place sell orders lower than lower bound
                 self.sell_price = max(
                     new_base / order['quote']['amount'], self.lower_bound)
+                print(self.sell_price)
                 self.sell_order_to_beat = order['id']
                 self.log.debug(
                     'Sell price to be higher: {:.8f}'.format(self.sell_price))
@@ -212,10 +217,11 @@ class Strategy(StrategyBase):
         for order in buy_orders:
             if order['base']['amount'] > buy_order_size_threshold:
                 new_quote = order['quote']['amount'] - 2 * \
-                    10 ** -self.market['quote']['precision']
+                            10 ** -self.market['quote']['precision']
                 # Don't let to place buy orders above upper bound
                 self.buy_price = min(
                     order['base']['amount'] / new_quote, self.upper_bound)
+                print(self.buy_price)
                 self.buy_order_to_beat = order['id']
                 self.log.debug(
                     'Buy price to be higher: {:.8f}'.format(self.buy_price))
@@ -244,9 +250,12 @@ class Strategy(StrategyBase):
                 self.log.error(
                     'Amount for {} order is too small'.format(order_type))
                 return
+            print('before:')
             new_order = self.place_market_buy_order(
                 amount_quote, self.buy_price)
+            print(new_order)
             self.beaten_buy_order = self.buy_order_to_beat
+            print(self.beaten_buy_order)
         elif order_type == 'sell':
             if not self.sell_price:
                 self.log.error(

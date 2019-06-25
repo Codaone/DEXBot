@@ -125,6 +125,7 @@ def create_asset(bitshares):
 
     def _create_asset(asset, precision):
         max_supply = 1000000000000000 / 10 ** precision if precision > 0 else 1000000000000000
+
         bitshares.create_asset(asset, precision, max_supply, account=DEFAULT_ACCOUNT)
 
     return _create_asset

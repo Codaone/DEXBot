@@ -14,7 +14,7 @@ def assets(create_asset):
 def accounts(assets, prepare_account):
 
     prepare_account({'MYBASE': 10000, 'MYQUOTE': 2000}, account='worker1')
-
+    prepare_account({'MYBASE': 20000, 'MYQUOTE': 5000}, account='worker2')
 
 
 
