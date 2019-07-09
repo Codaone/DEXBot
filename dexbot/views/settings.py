@@ -1,10 +1,10 @@
 from dexbot.controllers.settings_controller import SettingsController
 from dexbot.views.ui.settings_window_ui import Ui_settings_dialog
 
-from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox
 
 
-class SettingsView(QtWidgets.QDialog, Ui_settings_dialog):
+class SettingsView(QDialog, Ui_settings_dialog):
 
     def __init__(self):
         super().__init__()
@@ -25,8 +25,12 @@ class SettingsView(QtWidgets.QDialog, Ui_settings_dialog):
         self.remove_button.clicked.connect(self.controller.remove_node)
         self.move_up_button.clicked.connect(self.controller.move_up)
         self.move_down_button.clicked.connect(self.controller.move_down)
-        self.restore_defaults_button.clicked.connect(self.controller.restore_defaults)
 
         # Dialog controls
-        self.button_box.rejected.connect(self.reject)
-        self.button_box.accepted.connect(self.controller.save_settings)
+        self.restore_defaults = self.button_box.button(QDialogButtonBox.RestoreDefaults)
+        self.discard = self.button_box.button(QDialogButtonBox.Discard)
+        self.save = self.button_box.button(QDialogButtonBox.Save)
+
+        self.discard.clicked.connect(self.reject)
+        self.restore_defaults.clicked.connect(self.controller.restore_defaults)
+        self.save.clicked.connect(self.controller.save_settings)

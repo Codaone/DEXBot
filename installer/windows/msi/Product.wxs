@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <?include ..\bundle\resources\variables.wxi ?>
+  <Product Id="*"
+           Name="$(var.ApplicationName)"
+           Language="1033"
+           Version="$(var.ApplicationVersion)"
+           Manufacturer="$(var.Manufacturer)"
+           UpgradeCode="497F349B-D2F6-4488-9FE4-797E7E58B158" >
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." AllowDowngrades="no" Schedule="afterInstallExecute"  />
+    <MediaTemplate EmbedCab="yes" />
+    <Feature Id="ProductFeature" Title="BitsharesInstallView" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="ApplicationShortcutDesktop" />
+    </Feature>
+  </Product>
+  <Fragment>
+    <Icon Id="icon.ico" SourceFile="assets\dexbot-icon.ico"/>
+    <Property Id='ARPPRODUCTICON' Value='icon.ico' />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      
+      <!-- Begin desktop shortcut -->
+      <Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="ApplicationShortcutDesktop" Guid="*">
+          <Shortcut
+              Id="ApplicationDesktopShortcut"
+              Name="DEXBot"
+              Description="Bitshares DEXBot"
+              Target="[INSTALLDIR]\DEXBot.exe"
+              WorkingDirectory="INSTALLDIR" Icon="ProductIcon">
+            <Icon Id="ProductIcon" SourceFile="assets\dexbot-icon.ico" />
+          </Shortcut>
+          <RemoveFolder Id="DesktopFolder" On="uninstall"/>
+          <RegistryValue
+              Root="HKCU"
+              Key="Software/MyAppName"
+              Name="installed"
+              Type="integer"
+              Value="1"
+              KeyPath="yes"/>
+        </Component>
+      </Directory>
+      <!-- End desktop shortcut -->
+      
+      <!-- Begin program files entry-->
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="APPLICATIONFOLDER" Name="Bitshares">
+          <Directory Id="INSTALLDIR" Name="$(var.ApplicationName)" >
+          </Directory>
+        </Directory>
+      </Directory>
+      <!-- End program files entry-->
+      
+      <!-- Begin start menu entry -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Bitshares"/>
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="1BFD9CC9-8208-49C1-AB8D-3DC2B7877792">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="DEXBot"
+                  Description="Bitshares DEXBot"
+                  Target="[INSTALLDIR]\DEXBot.exe"
+                  WorkingDirectory="INSTALLDIR"/>
+        <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Bitshares\DEXBot" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+    <!-- End start menu entry-->
+  </Fragment>
+
+  <!-- Begin installed files -->
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLDIR">
+      <Component Id="Executable" Guid="BA839128-3480-4796-A8B1-4E8D229D7446">
+        <File Id="WinAppExe" Name="DEXBot.exe" Source="DEXBot.exe" Vital="yes" />
+        <RemoveFolder Id="INSTALLDIR" On="uninstall" />
+      </Component>
+      <Component Id="Documentation" Guid="A70DAF37-0EAC-49BD-A8B0-2C5D8AF81085">
+        <File Id="ReadMeTxt" Name="README.txt" Source="README.txt" Vital="yes" />
+      </Component>
+      </ComponentGroup>
+  </Fragment>
+  <!-- End installed files -->
+</Wix>

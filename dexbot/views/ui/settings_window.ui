@@ -118,7 +118,7 @@
                 <string notr="true">border: 0px; background-color: #623a3a; width: 100px; height: 20px; border-radius: 5px; color: #fff;</string>
                </property>
                <property name="text">
-                <string>Delete</string>
+                <string>Remove</string>
                </property>
               </widget>
              </item>
@@ -173,44 +173,6 @@
                </property>
                <property name="text">
                 <string>Down</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="verticalSpacer">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="restore_defaults_button">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>60</width>
-                 <height>20</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">border: 0px; background-color: #3a5162; width: 100px; height: 20px; border-radius: 5px; color: #fff;</string>
-               </property>
-               <property name="text">
-                <string>Defaults</string>
                </property>
               </widget>
              </item>
@@ -274,8 +236,11 @@
    </item>
    <item row="1" column="0">
     <widget class="QDialogButtonBox" name="button_box">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+      <set>QDialogButtonBox::Discard|QDialogButtonBox::RestoreDefaults|QDialogButtonBox::Save</set>
      </property>
      <property name="centerButtons">
       <bool>false</bool>

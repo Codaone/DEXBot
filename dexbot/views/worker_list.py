@@ -3,65 +3,117 @@ from threading import Thread
 import webbrowser
 
 from dexbot import __version__
-from dexbot.qt_queue.queue_dispatcher import ThreadDispatcher
+from dexbot.config import Config
+from dexbot.controllers.wallet_controller import WalletController
+from dexbot.views.create_wallet import CreateWalletView
+from dexbot.views.create_worker import CreateWorkerView
+from dexbot.views.errors import gui_error
+from dexbot.views.layouts.flow_layout import FlowLayout
+from dexbot.views.settings import SettingsView
+from dexbot.views.ui.worker_list_window_ui import Ui_MainWindow
+from dexbot.views.unlock_wallet import UnlockWalletView
+from dexbot.views.worker_item import WorkerItemWidget
 from dexbot.qt_queue.idle_queue import idle_add
-from .ui.worker_list_window_ui import Ui_MainWindow
-from .create_worker import CreateWorkerView
-from .settings import SettingsView
-from .worker_item import WorkerItemWidget
-from .errors import gui_error
-from .layouts.flow_layout import FlowLayout
+from dexbot.qt_queue.queue_dispatcher import ThreadDispatcher
 
-from PyQt5 import QtGui, QtWidgets
-from bitsharesapi.bitsharesnoderpc import BitSharesNodeRPC
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QFontDatabase
+from PyQt5.QtWidgets import QMainWindow
+from grapheneapi.exceptions import NumRetriesReached
 
 
-class MainView(QtWidgets.QMainWindow, Ui_MainWindow):
+class MainView(QMainWindow, Ui_MainWindow):
 
-    def __init__(self, main_ctrl):
+    def __init__(self, main_controller):
         super().__init__()
         self.setupUi(self)
-        self.main_ctrl = main_ctrl
+        self.main_controller = main_controller
 
-        self.config = main_ctrl.config
+        self.config = main_controller.config
         self.max_workers = 10
         self.num_of_workers = 0
         self.worker_widgets = {}
         self.closing = False
-        self.statusbar_updater = None
+        self.status_bar_updater = None
         self.statusbar_updater_first_run = True
-        self.main_ctrl.set_info_handler(self.set_worker_status)
+        self.main_controller.set_info_handler(self.set_worker_status)
         self.layout = FlowLayout(self.scrollAreaContent)
+        self.dispatcher = None
 
-        self.add_worker_button.clicked.connect(lambda: self.handle_add_worker())
-        self.settings_button.clicked.connect(lambda: self.handle_open_settings())
-        self.help_button.clicked.connect(lambda: self.handle_open_documentation())
+        # GUI buttons
+        self.add_worker_button.clicked.connect(self.handle_add_worker)
+        self.settings_button.clicked.connect(self.handle_open_settings)
+        self.help_button.clicked.connect(self.handle_open_documentation)
+        self.unlock_wallet_button.clicked.connect(self.handle_login)
 
-        # Load worker widgets from config file
-        workers = self.config.workers_data
-        for worker_name in workers:
-            self.add_worker_widget(worker_name)
+        # Hide certain buttons by default until login success
+        self.add_worker_button.hide()
 
-            # Limit the max amount of workers so that the performance isn't greatly affected
-            if self.num_of_workers >= self.max_workers:
-                self.add_worker_button.setEnabled(False)
-                break
+        self.status_bar.showMessage("ver {} - Node disconnected".format(__version__))
 
-        # Dispatcher polls for events from the workers that are used to change the ui
-        self.dispatcher = ThreadDispatcher(self)
-        self.dispatcher.start()
+        QFontDatabase.addApplicationFont(":/bot_widget/font/SourceSansPro-Bold.ttf")
 
-        self.status_bar.showMessage("ver {} - Node delay: - ms".format(__version__))
-        self.statusbar_updater = Thread(
-            target=self._update_statusbar_message
-        )
-        self.statusbar_updater.start()
+    def connect_to_bitshares(self):
+        # Check if there is already a connection
+        if self.config['node']:
+            # Test nodes first. This only checks if we're able to connect
+            self.status_bar.showMessage('Connecting to Bitshares...')
+            try:
+                self.main_controller.measure_latency(self.config['node'])
+            except NumRetriesReached:
+                self.status_bar.showMessage('ver {} - Coudn\'t connect to Bitshares. '
+                                            'Please use different node(s) and retry.'.format(__version__))
+                self.main_controller.set_bitshares_instance(None)
+                return False
 
-        QtGui.QFontDatabase.addApplicationFont(":/bot_widget/font/SourceSansPro-Bold.ttf")
+            self.main_controller.new_bitshares_instance(self.config['node'])
+            self.status_bar.showMessage(self.get_statusbar_message())
+            return True
+        else:
+            # Config has no nodes in it
+            self.status_bar.showMessage('ver {} - Node(s) not found. '
+                                        'Please add node(s) from settings.'.format(__version__))
+            return False
+
+    @pyqtSlot(name='handle_login')
+    def handle_login(self):
+        if not self.main_controller.bitshares_instance:
+            if not self.connect_to_bitshares():
+                return
+
+        wallet_controller = WalletController(self.main_controller.bitshares_instance)
+
+        if wallet_controller.wallet_created():
+            unlock_view = UnlockWalletView(wallet_controller)
+        else:
+            unlock_view = CreateWalletView(wallet_controller)
+
+        if unlock_view.exec_():
+            # Hide button once successful wallet creation / login
+            self.unlock_wallet_button.hide()
+            self.add_worker_button.show()
+
+            # Load worker widgets from config file
+            workers = self.config.workers_data
+            for worker_name in workers:
+                self.add_worker_widget(worker_name)
+
+                # Limit the max amount of workers so that the performance isn't greatly affected
+                if self.num_of_workers >= self.max_workers:
+                    self.add_worker_button.setEnabled(False)
+                    break
+
+            # Dispatcher polls for events from the workers that are used to change the ui
+            self.dispatcher = ThreadDispatcher(self)
+            self.dispatcher.start()
+
+            self.status_bar.showMessage("ver {} - Node delay: - ms".format(__version__))
+            self.status_bar_updater = Thread(target=self._update_statusbar_message)
+            self.status_bar_updater.start()
 
     def add_worker_widget(self, worker_name):
         config = self.config.get_worker_config(worker_name)
-        widget = WorkerItemWidget(worker_name, config, self.main_ctrl, self)
+        widget = WorkerItemWidget(worker_name, config, self.main_controller, self)
         widget.setFixedSize(widget.frameSize())
         self.layout.addWidget(widget)
         self.worker_widgets[worker_name] = widget
@@ -82,25 +134,35 @@ class MainView(QtWidgets.QMainWindow, Ui_MainWindow):
         worker_data = self.worker_widgets.pop(old_worker_name)
         self.worker_widgets[new_worker_name] = worker_data
 
+    @pyqtSlot(name='handle_add_worker')
     @gui_error
     def handle_add_worker(self):
-        create_worker_dialog = CreateWorkerView(self.main_ctrl.bitshares_instance)
+        create_worker_dialog = CreateWorkerView(self.main_controller.bitshares_instance)
         return_value = create_worker_dialog.exec_()
 
         # User clicked save
         if return_value == 1:
             worker_name = create_worker_dialog.worker_name
-            self.main_ctrl.create_worker(worker_name)
+            self.main_controller.create_worker(worker_name)
 
             self.config.add_worker_config(worker_name, create_worker_dialog.worker_data)
             self.add_worker_widget(worker_name)
 
+    @pyqtSlot(name='handle_open_settings')
     @gui_error
     def handle_open_settings(self):
         settings_dialog = SettingsView()
-        settings_dialog.exec_()
+        reconnect = settings_dialog.exec_()
+
+        if reconnect:
+            # Reinitialize config after closing the settings window
+            self.config = Config()
+            self.main_controller.config = self.config
+
+            self.connect_to_bitshares()
 
     @staticmethod
+    @pyqtSlot(name='handle_open_documentation')
     def handle_open_documentation():
         webbrowser.open('https://github.com/Codaone/DEXBot/wiki')
 
@@ -126,8 +188,8 @@ class MainView(QtWidgets.QMainWindow, Ui_MainWindow):
     def closeEvent(self, event):
         self.closing = True
         self.status_bar.showMessage("Closing app...")
-        if self.statusbar_updater and self.statusbar_updater.is_alive():
-            self.statusbar_updater.join()
+        if self.status_bar_updater and self.status_bar_updater.is_alive():
+            self.status_bar_updater.join()
 
     def _update_statusbar_message(self):
         while not self.closing:
@@ -146,16 +208,14 @@ class MainView(QtWidgets.QMainWindow, Ui_MainWindow):
                 time.sleep(0.5)
 
     def get_statusbar_message(self):
-        node = self.config['node']
+        node = self.main_controller.bitshares_instance.rpc.url
         try:
-            start = time.time()
-            rpc = BitSharesNodeRPC(node, num_retries=1)
-            latency = (time.time() - start) * 1000
+            latency = self.main_controller.measure_latency(node)
         except BaseException:
             latency = -1
 
         if latency != -1:
-            return "ver {} - Node delay: {:.2f}ms - node: {}".format(__version__, latency, rpc.url)
+            return "ver {} - Node delay: {:.2f}ms - node: {}".format(__version__, latency, node)
         else:
             return "ver {} - Node disconnected".format(__version__)
 

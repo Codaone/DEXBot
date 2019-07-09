@@ -4,6 +4,7 @@ import os.path
 import pytest
 import socket
 import random
+import time
 
 from bitshares import BitShares
 from bitshares.instance import set_shared_bitshares_instance
@@ -77,6 +78,7 @@ def bitshares_testnet(session_id, unused_port, docker_manager):
         detach=True,
     )
     container.service_port = port
+    time.sleep(3)
     yield container
     container.remove(v=True, force=True)
 

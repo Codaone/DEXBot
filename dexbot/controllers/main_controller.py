@@ -1,6 +1,7 @@
 import os
 import logging
 import sys
+import time
 
 from dexbot import VERSION, APP_NAME, AUTHOR
 from dexbot.helper import initialize_orders_log, initialize_data_folders
@@ -8,14 +9,16 @@ from dexbot.worker import WorkerInfrastructure
 from dexbot.views.errors import PyQtHandler
 
 from appdirs import user_data_dir
+from bitshares.bitshares import BitShares
 from bitshares.instance import set_shared_bitshares_instance
+from bitsharesapi.bitsharesnoderpc import BitSharesNodeRPC
+from grapheneapi.exceptions import NumRetriesReached
 
 
 class MainController:
 
-    def __init__(self, bitshares_instance, config):
-        self.bitshares_instance = bitshares_instance
-        set_shared_bitshares_instance(bitshares_instance)
+    def __init__(self, config):
+        self.bitshares_instance = None
         self.config = config
         self.worker_manager = None
 
@@ -40,6 +43,24 @@ class MainController:
 
         # Initialize folders
         initialize_data_folders()
+
+    def set_bitshares_instance(self, bitshares_instance):
+        """ Set bitshares instance
+
+            :param bitshares_instance: A bitshares instance
+        """
+        self.bitshares_instance = bitshares_instance
+        set_shared_bitshares_instance(bitshares_instance)
+
+    def new_bitshares_instance(self, node, retries=-1, expiration=60):
+        """ Create bitshares instance
+
+            :param retries: Number of retries to connect, -1 default to infinity
+            :param expiration: Delay in seconds until transactions are supposed to expire
+            :param list node: Node or a list of nodes
+        """
+        self.bitshares_instance = BitShares(node, num_retries=retries, expiration=expiration)
+        set_shared_bitshares_instance(self.bitshares_instance)
 
     def set_info_handler(self, handler):
         self.pyqt_handler.set_info_handler(handler)
@@ -74,6 +95,30 @@ class MainController:
             # Worker manager not running
             config = self.config.get_worker_config(worker_name)
             WorkerInfrastructure.remove_offline_worker(config, worker_name, self.bitshares_instance)
+
+    @staticmethod
+    def measure_latency(nodes):
+        """ Measures latency of first alive node from given nodes in milliseconds
+
+            :param str,list nodes: Bitshares node address(-es)
+            :return: int: latency in milliseconds
+            :raises grapheneapi.exceptions.NumRetriesReached: if failed to find a working node
+        """
+        if isinstance(nodes, str):
+            nodes = [nodes]
+
+        # Check nodes one-by-one until first working found
+        for node in nodes:
+            try:
+                start = time.time()
+                BitSharesNodeRPC(node, num_retries=1)
+                latency = (time.time() - start) * 1000
+                return latency
+            except (NumRetriesReached, OSError):
+                # [Errno 111] Connection refused -> OSError
+                continue
+
+        raise NumRetriesReached
 
     @staticmethod
     def create_worker(worker_name):

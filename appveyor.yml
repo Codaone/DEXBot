@@ -11,28 +11,42 @@ environment:
 #        Build                    #
 #---------------------------------#
 
-build: off
-
-configuration: Release
-
 install:
+  - ps: Start-FileDownload 'https://www.python.org/ftp/python/3.6.6/python-3.6.6-amd64.exe'
+  - copy python-3.6.6-amd64.exe installer\windows\bundle\prerequisites\python-3.6.6.exe
   - SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%;C:\MinGW\bin
   - copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
   - copy c:\Python36-x64\python.exe c:\Python36-x64\python3.exe
   - python --version
   - make install
-
-after_test:
   - make package
-  - '7z a DEXBot-gui-win64.zip %APPVEYOR_BUILD_FOLDER%\dist\DEXBot-gui.exe'
+  - copy /Y dist\DEXBot-gui.exe installer\windows\msi\DEXBot.exe
+  # Read dexbot version from __init__.py
+  - ps:  Get-Content dexbot\__init__.py | Foreach-Object { $var = $_.Split('='); if($var[0].Trim() -eq 'VERSION') { $env:VERSION = $var[1].Trim(); }}
+  # Set to version and replace ' with empty character
+  - set ApplicationVersion=%VERSION:'=%
+  - '7z a DEXBot-gui-win64-%ApplicationVersion%.zip %APPVEYOR_BUILD_FOLDER%\dist\DEXBot-gui.exe'
+
+# Visual studio configuration
+configuration:
+- Release
+platform: x86
+build:
+  verbosity: normal
+
+after_build:
+  - ps: Rename-Item -Path ".\installer\windows\bundle\bin\$env:CONFIGURATION\DEXBot-installer.exe" -NewName "DEXBot-installer-$env:ApplicationVersion.exe"
 
 # @TODO: Run tests..
 test_script:
   - "echo tests..."
 
+# Artifacts as relative path to the build folder C:\projects\dexbot
 artifacts:
-  - path: DEXBot-gui-win64.zip
-    name: DEXBot-gui-win64.zip
+  - path: DEXBot-gui-win64-%ApplicationVersion%.zip
+    name: DEXBot-gui-win64-%ApplicationVersion%.zip
+  - path: installer\windows\bundle\bin\%CONFIGURATION%\DEXBot-installer-%ApplicationVersion%.exe
+    name: DEXBot-installer-%ApplicationVersion%.exe
 
 #---------------------------------#
 #        Deployment               #
@@ -50,7 +64,7 @@ deploy:
     auth_token:
       secure: 9qvwlVUHFBV4GwMz1Gu2HSnqU8Ex2nv5dsY4mVNCurrb+6ULIoHPgbvJPWTo3qV6
     on:
-      appveyor_repo_tag: true     # deploy on tag push only
+      appveyor_repo_tag: true     # Deploy on tag push only
 
 #---------------------------------#
 #         Notifications           #

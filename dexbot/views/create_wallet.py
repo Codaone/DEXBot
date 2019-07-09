@@ -1,11 +1,11 @@
-from .ui.create_wallet_window_ui import Ui_Dialog
-from .notice import NoticeDialog
-from .errors import gui_error
+from dexbot.views.ui.create_wallet_window_ui import Ui_Dialog
+from dexbot.views.notice import NoticeDialog
+from dexbot.views.errors import gui_error
 
-from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QDialog
 
 
-class CreateWalletView(QtWidgets.QDialog, Ui_Dialog):
+class CreateWalletView(QDialog, Ui_Dialog):
 
     def __init__(self, controller):
         self.controller = controller
