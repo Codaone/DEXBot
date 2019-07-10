@@ -86,7 +86,7 @@ def orders1(order_engines):
     order_engines.place_market_sell_order(1, 2, returnOrderId=True)
     order_engines.place_market_buy_order(0.5, 2, returnOrderId=True)
 
-    yield
+    yield order_engines
     order_engines.cancel_all_orders()
     time.sleep(1.1)
 
@@ -95,7 +95,7 @@ def orders1(order_engines):
 def order_sell(order_engines, account_name):
     order_engines.place_market_sell_order(10, 1)
 
-    yield
+    yield order_engines
     order_engines.cancel_all_orders()
     time.sleep(1.1)
 
@@ -104,13 +104,13 @@ def order_sell(order_engines, account_name):
 def order_buy(order_engines):
     order_engines.place_market_buy_order(100, 1)
 
-    yield
+    yield order_engines
     order_engines.cancel_all_orders()
     time.sleep(1.1)
 
 
 @pytest.fixture(scope='function')
 def order_part_filled(order_engines, order_buy, order_sell):
-    yield
+    yield order_engines
     order_engines.cancel_all_orders()
     time.sleep(1.1)

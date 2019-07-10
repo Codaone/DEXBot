@@ -3,6 +3,9 @@ import time
 
 from dexbot.strategies.king_of_the_hill import Strategy
 from bitshares.market import Market
+import copy
+
+MODES = ['both', 'buy', 'sell']
 
 
 @pytest.fixture(scope='session')
@@ -47,14 +50,13 @@ def other_orders(bitshares, account_other):
     ors_ids = []
     o = market.buy(1, 10, returnOrderId=True, account='other')
     ors_ids.append(o.get('orderid'))
-    o = market.sell(1, 20, returnOrderId=True, account='other')
+    o = market.sell(2, 20, returnOrderId=True, account='other')
     ors_ids.append(o.get('orderid'))
-    o = market.buy(0.5, 20, returnOrderId=True, account='other')
+    o = market.buy(1.5, 20, returnOrderId=True, account='other')
     ors_ids.append(o.get('orderid'))
     yield
-    print('取消', ors_ids)
-    # bitshares.cancel(ors_ids, account='other')
-    # todo: can't cancel
+    # if order filled then market.cancel() error
+    market.cancel(ors_ids, account='other')
     time.sleep(1.1)
 
 
@@ -65,7 +67,7 @@ def kh_worker_name():
     return 'kh-worker'
 
 
-@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA')])  # , ('QUOTEB', 'BASEB')
+@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA'), ('QUOTEB', 'BASEB')])
 def config(request, bitshares, account, kh_worker_name):
     """ Define worker's config with variable assets
 
@@ -96,27 +98,74 @@ def config(request, bitshares, account, kh_worker_name):
 
 
 @pytest.fixture(scope='module')
-def kh(bitshares, kh_worker_name, config):
+def base_worker(bitshares, kh_worker_name):
     """ Fixture to share king_or_the_hill object
     """
-    kh = Strategy(
-        name=kh_worker_name,
-        config=config,
-        bitshares_instance=bitshares
-    )
-    yield kh
-    kh.cancel_all_orders()
-    kh.bitshares.txbuffer.clear()
-    kh.bitshares.bundle = False
+    worker_name = kh_worker_name
+    workers = []
+
+    def _base_worker(config):
+        worker = Strategy(
+            name=kh_worker_name,
+            config=config,
+            bitshares_instance=bitshares
+        )
+        workers.append(worker)
+        return worker
+
+    yield _base_worker
+    for worker in workers:
+        worker.cancel_all_orders()
+        worker.bitshares.txbuffer.clear()
+        worker.bitshares.bundle = False
+
+
+@pytest.fixture
+def worker(base_worker, config):
+    """ Worker to test in single mode (for methods which not required to be tested against all modes)
+    """
+    worker = base_worker(config)
+    return worker
+
+
+@pytest.fixture(params=MODES)
+def config_variable_modes(request, config, kh_worker_name):
+    """ Test config which tests all modes
+    """
+    worker_name = kh_worker_name
+    config = copy.deepcopy(config)
+    config['workers'][worker_name]['mode'] = request.param
+    return config
 
 
 @pytest.fixture(scope='function')
-def orders1(kh):
-    kh.place_market_buy_order(1, 100, returnOrderId=True)
-    kh.place_market_sell_order(1, 200, returnOrderId=True)
+def orders1(worker):
+    worker.place_market_buy_order(1, 100, returnOrderId=True)
+    worker.place_market_sell_order(1, 200, returnOrderId=True)
 
-    # kh.place_market_buy_order(0.5, 200, returnOrderId=True)
+    # worker.place_market_buy_order(0.5, 200, returnOrderId=True)
 
-    yield
-    kh.cancel_all_orders()
+    yield worker
+    worker.cancel_all_orders()
     time.sleep(1.1)
+
+
+@pytest.fixture(scope='function')
+def orders2(worker2):
+    worker2.place_market_buy_order(1, 100, returnOrderId=True)
+    worker2.place_market_sell_order(1, 200, returnOrderId=True)
+
+    # worker.place_market_buy_order(0.5, 200, returnOrderId=True)
+
+    yield worker2
+    worker2.cancel_all_orders()
+    time.sleep(1.1)
+
+
+@pytest.fixture
+def worker2(base_worker, config_variable_modes):
+    """ Worker to test all modes
+    """
+    print('进入worker2')
+    worker = base_worker(config_variable_modes)
+    return worker

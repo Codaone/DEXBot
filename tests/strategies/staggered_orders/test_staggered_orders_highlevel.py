@@ -157,7 +157,7 @@ def test_place_highest_sell_order(worker2):
     worker.refresh_orders()
 
     # Expect furthest order price to be less than increment x2
-    assert worker.sell_orders[-1]['price'] ** -1 > worker.upper_bound / (1 + worker.increment * 2)
+    assert worker.sell_orders[-1]['price'] ** -1 > worker.upper_  / (1 + worker.increment * 2)
 
 
 @pytest.mark.parametrize('asset', ['base', 'quote'])

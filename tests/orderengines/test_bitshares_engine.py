@@ -49,7 +49,8 @@ def test_account_total_value(order_engines):
     assert atv == a
 
 
-def test_account_total_value(order_engines, orders1):
+def test_account_total_value(orders1):
+    order_engines = orders1
     a = order_engines.balance(order_engines.market['base']['symbol'])
     atv = order_engines.account_total_value(order_engines.market['base']['symbol'])
     assert atv != a
@@ -73,7 +74,6 @@ def test_calculate_worker_value(order_engines):
     assert cwv > 1000
     cwv = order_engines.calculate_worker_value(order_engines.market['quote']['symbol'])
     assert cwv > 2000
-
 
 
 def test_cancel_all_orders(order_engines):
@@ -175,7 +175,8 @@ def test_get_order_creation_fee(order_engines):
     assert fee == limit_order_create
 
 
-def test_get_own_buy_orders(order_engines, order_buy):
+def test_get_own_buy_orders(order_buy):
+    order_engines = order_buy
     orders = order_engines.account.openorders
 
     assert orders != []
@@ -184,7 +185,8 @@ def test_get_own_buy_orders(order_engines, order_buy):
     assert orders == r
 
 
-def test_get_own_sell_orders(order_engines, order_sell):
+def test_get_own_sell_orders(order_sell):
+    order_engines = order_sell
     sells = order_engines.account.openorders
 
     assert sells != []
@@ -194,13 +196,15 @@ def test_get_own_sell_orders(order_engines, order_sell):
     assert orders == sells
 
 
-def test_get_own_spread(order_engines, orders1):
+def test_get_own_spread(orders1):
+    order_engines = orders1
     spread = order_engines.get_own_spread()
 
     assert spread == 2 / 1 - 1
 
 
-def test_get_updated_order(order_engines, order_part_filled):
+def test_get_updated_order(order_part_filled):
+    order_engines = order_part_filled
     orders = order_engines.account.openorders
     for o in orders:
         c = order_engines.get_updated_order(o['id'])
@@ -220,7 +224,8 @@ def test_execute(order_engines):
     pass
 
 
-def test_is_buy_order(order_engines, orders1):
+def test_is_buy_order(orders1):
+    order_engines = orders1
     orders = order_engines.account.openorders
     for o in orders:
         if o['base']['symbol'] == order_engines.market['base']['symbol']:
@@ -240,7 +245,8 @@ def test_is_current_market(order_engines):
     assert r == False
 
 
-def test_is_sell_order(order_engines, orders1):
+def test_is_sell_order(orders1):
+    order_engines = orders1
     orders = order_engines.get_all_own_orders()
     for o in orders:
         if o['base']['symbol'] == order_engines.market['quote']['symbol']:
@@ -288,21 +294,24 @@ def test_balances(order_engines):
             assert b == a
 
 
-def test_get_all_own_orders(order_engines, orders1):
+def test_get_all_own_orders(orders1):
+    order_engines = orders1
     orders = order_engines.get_all_own_orders()
     for o in orders:
         if o['base']['symbol'] == order_engines.market['base']['symbol']:
             assert o['price'] == 1
 
 
-def test_all_own_orders(order_engines, orders1):
+def test_all_own_orders(orders1):
+    order_engines = orders1
     orders = order_engines.all_own_orders
     for o in orders:
         if o['base']['symbol'] == order_engines.market['base']['symbol']:
             assert o['price'] == 1
 
 
-def test_own_orders(order_engines, orders1):
+def test_own_orders(orders1):
+    order_engines = orders1
     orders = order_engines.account.openorders
     r = order_engines.own_orders
 
@@ -314,11 +323,13 @@ def test_market(order_engines, symbol):
     assert order_engines.market['quote']['symbol'] == symbol.split('/')[0]
 
 
-def test_get_updated_limit_order(order_engines, orders1):
+def test_get_updated_limit_order(orders1):
+    order_engines = orders1
     ors = order_engines.get_all_own_orders()
 
 
-def test_convert_asset(order_engines, orders1):
+def test_convert_asset(orders1):
+    order_engines = orders1
     r = order_engines.convert_asset(10, order_engines.market['base']['symbol'], order_engines.market['quote']['symbol'],
                                     bitshares_instance=order_engines.bitshares)
     assert r == 5
@@ -332,7 +343,8 @@ def test_convert_fee(order_engines):
     assert float(c) == r
 
 
-def test_get_order(order_engines, orders1):
+def test_get_order(orders1):
+    order_engines = orders1
     ors = order_engines.account.openorders
 
     for o in ors:

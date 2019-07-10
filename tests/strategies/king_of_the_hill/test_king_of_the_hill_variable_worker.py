@@ -1,31 +1,30 @@
-# todo:add self.buy_price=None @line 95
-# TODO:add self.sell_price=None @line 96
-# todo : 183 line: own_orders_ids = [order['id'] for order in self.get_own_orders]==>>self.get_own_orders()
-# todo: line 249 , Event 'is_too_small_amounts' is not declared
-import datetime
+from dexbot.strategies.king_of_the_hill import Strategy
+import logging
+import pytest
+from bitshares.account import Account
+from bitshares.asset import Asset
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(funcName)s %(lineno)d  : %(message)s'
+)
 
 
-
-
-def test_maintain_strategy(worker):
-    worker.cancel_all_orders()
+def test_maintain_strategy(worker2):
+    worker2.cancel_all_orders()
     # Undefine market_center_price
-    worker.market_center_price = None
+    worker2.market_center_price = None
 
-    worker.maintain_strategy()
-    assert worker.market_center_price == worker.center_price
-
-
+    worker2.maintain_strategy()
+    assert worker2.market_center_price == worker2.center_price
 
 
-
-def test_check_orders(worker):
-    worker.check_orders()
-
+def test_check_orders(worker2):
+    worker2.check_orders()
 
 
-def test_get_order_type(orders1):
-    worker = orders1
+def test_get_order_type(orders2):
+    worker = orders2
     orders = worker.own_orders
     for o in orders:
         r = worker.get_order_type(o)
@@ -35,8 +34,8 @@ def test_get_order_type(orders1):
             assert r == 'sell'
 
 
-def test_calc_order_prices(other_orders, orders1):
-    worker = orders1
+def test_calc_order_prices(other_orders, orders2):
+    worker = orders2
     print('进入函数！')
     orders = worker.own_orders
     print('own_orders:', orders)
@@ -59,34 +58,34 @@ def test_calc_order_prices(other_orders, orders1):
     assert None == sell_price
 
 
-def test_place_order(worker):
-    print(worker.buy_price)
-    worker.buy_price = 1
+def test_place_order(worker2):
+    print(worker2.buy_price)
+    worker2.buy_price = 1
 
-    worker.place_order('buy')
-    print(worker.orders)
+    worker2.place_order('buy')
+    print(worker2.orders)
     # worker.place_order('sell')
     # print(worker.orders)
 
 
-def test_place_orders(worker):
-    worker.place_orders()
+def test_place_orders(worker2):
+    worker2.place_orders()
 
 
-def test_amount_quote(worker):
+def test_amount_quote(worker2):
     # config: 'sell_order_amount': 2.0,
-    sell_order_amount = worker.amount_quote
+    sell_order_amount = worker2.amount_quote
     assert sell_order_amount == 2
 
 
-def test_amount_base(worker):
+def test_amount_base(worker2):
     # config: 'buy_order_amount': 1.0,
-    buy_order_amount = worker.amount_base
+    buy_order_amount = worker2.amount_base
     assert buy_order_amount == 1
 
-    base_balance = float(worker.balance(worker.market['base']))
+    base_balance = float(worker2.balance(worker2.market['base']))
     amount = base_balance * (buy_order_amount / 100)
-    worker.is_relative_order_size = True
-    buy_order_amount = worker.amount_base
+    worker2.is_relative_order_size = True
+    buy_order_amount = worker2.amount_base
 
     assert buy_order_amount == amount

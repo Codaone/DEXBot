@@ -4,6 +4,7 @@ import time
 from dexbot.pricefeeds.bitshares_feed import BitsharesPriceFeed
 from bitshares.market import Market
 
+
 @pytest.fixture(scope='module')
 def assets(create_asset):
     create_asset('MYBASE', 0)
@@ -49,6 +50,7 @@ def bitshares_feed(base_bitshares_feed):
     """
     bf = base_bitshares_feed()
     return bf
+
 
 
 @pytest.fixture(scope='module')
