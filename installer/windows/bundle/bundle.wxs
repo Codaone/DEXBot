@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
+  
+  <?include ..\bundle\resources\variables.wxi ?>
+  
+	<Bundle Name="$(var.ApplicationName)"
+          Version='$(var.ApplicationVersion)'
+          Manufacturer="$(var.Manufacturer)"
+          IconSourceFile="assets/dexbot-icon.ico"
+          UpgradeCode="5397E671-1059-487E-9E26-FD5E1095F77D">
+
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense" >
+      <bal:WixStandardBootstrapperApplication
+        LogoFile="assets/dexbot-icon.jpg"
+        ThemeFile="resources/classic_theme.xml"
+        LocalizationFile="resources/classic_theme.wxl"
+        LicenseUrl="license.rtf"/>
+      <Payload SourceFile='resources/license.rtf' />
+    </BootstrapperApplicationRef>
+
+    <?if $(var.Platform)~="x64" ?>
+      <Variable Name="SetupText" Value="[ProgramFiles64Folder]Python[WinVerNoDot]" bal:Overridable="yes" />
+      <Variable Name="TargetPlatform" Value="x64" />
+    <?else ?>
+      <Variable Name="DefaultAllUsersTargetDir" Value="[ProgramFilesFolder]Python[WinVerNoDot]" bal:Overridable="yes" />
+      <Variable Name="TargetPlatform" Value="x86" />
+    <?endif ?>
+    <Variable Name="LaunchTarget" Value="[ProgramFilesFolder]\Bitshares\DEXBot\DEXBot.exe"/>
+
+    <Chain>
+      
+      <ExePackage Id="Python"
+                  SourceFile="prerequisites\python-3.6.6.exe"
+                  Cache="yes"
+                  Compressed="yes"
+                  Permanent="yes"
+                  Vital="yes"
+                  DisplayName="Processing Python..."
+                  InstallCommand="/q Include_pip=1 PrependPath=1 Include_launcher=1 Include_test=0"
+                  />
+      <ExePackage Id="Uptick" DisplayName="Processing Uptick..." InstallCommand="cmd /K" SourceFile="prerequisites\uptick.bat" Vital="no" After="DEXBot"/>
+      <MsiPackage Id="DEXBot" After="Python" SourceFile="..\msi\bin\$(var.Build)\DEXBotInstaller.msi" DisplayName="Processing DEXBot..." />
+    </Chain>
+	</Bundle>
+</Wix>

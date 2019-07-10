@@ -49,7 +49,7 @@ exe = EXE(pyz,
           name=os.path.join('dist', 'DEXBot-gui' + ('.exe' if sys.platform == 'win32' else '')),
           debug=True,
           strip=False,
-          icon=None,
+          icon='.\\installer\\windows\\msi\\assets\\dexbot-icon.ico',
           upx=True,
           runtime_tmpdir=None,
           console=True)
@@ -57,5 +57,5 @@ exe = EXE(pyz,
 if sys.platform == 'darwin':
    app = BUNDLE(exe,
                 name='DEXBot-gui.app',
-                icon=None)
+                icon='./installer/windows/msi/assets/dexbot-icon.ico')
 

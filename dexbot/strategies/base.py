@@ -189,6 +189,8 @@ class StrategyBase(BitsharesOrderEngine, BitsharesPriceFeed):
             }
         )
 
+        self.worker_market = self.worker["market"]
+
         self.orders_log = logging.LoggerAdapter(logging.getLogger('dexbot.orders_log'), {})
 
     def pause(self):

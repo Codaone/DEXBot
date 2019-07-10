@@ -64,9 +64,6 @@ QScrollBar {
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
-      <property name="sizeAdjustPolicy">
-       <enum>QAbstractScrollArea::AdjustToContents</enum>
-      </property>
       <property name="widgetResizable">
        <bool>true</bool>
       </property>
@@ -88,11 +85,11 @@ QScrollBar {
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="toolTipDuration">
-        <number>-7</number>
-       </property>
        <property name="styleSheet">
         <string notr="true">color: white;</string>
+       </property>
+       <property name="toolTipDuration" stdset="0">
+        <number>-7</number>
        </property>
       </widget>
      </widget>
@@ -179,16 +176,7 @@ QScrollBar {
           <property name="spacing">
            <number>0</number>
           </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
+          <property name="margin">
            <number>0</number>
           </property>
           <item>
@@ -200,30 +188,52 @@ QScrollBar {
              </size>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_3">
-             <property name="spacing">
-              <number>0</number>
-             </property>
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
+             <item>
+              <widget class="QPushButton" name="unlock_wallet_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>250</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">border: 0px; background-color: #5581e8; width: 250px; height: 20px; border-radius: 10px; color: #ffffff;</string>
+               </property>
+               <property name="text">
+                <string>Unlock wallet</string>
+               </property>
+               <property name="toolTipDuration" stdset="0">
+                <number>-1</number>
+               </property>
+              </widget>
+             </item>
              <item>
               <spacer name="verticalSpacer">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Expanding</enum>
+               </property>
                <property name="sizeHint" stdset="0">
                 <size>
                  <width>20</width>
-                 <height>60</height>
+                 <height>20</height>
                 </size>
                </property>
               </spacer>
@@ -251,14 +261,14 @@ QScrollBar {
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
-               <property name="toolTipDuration">
-                <number>-1</number>
-               </property>
                <property name="styleSheet">
                 <string notr="true">border: 0px; background-color: #3A6257; width: 250px; height: 20px; border-radius: 10px; color: #ffffff;</string>
                </property>
                <property name="text">
                 <string>Add worker</string>
+               </property>
+               <property name="toolTipDuration" stdset="0">
+                <number>-1</number>
                </property>
               </widget>
              </item>
@@ -295,16 +305,7 @@ QScrollBar {
           <property name="spacing">
            <number>0</number>
           </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
+          <property name="margin">
            <number>0</number>
           </property>
           <item>
