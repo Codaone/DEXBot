@@ -705,12 +705,7 @@ class BitsharesOrderEngine(Storage, Events):
         if refresh:
             self.account.refresh()
         for order in self.account.openorders:
-<<<<<<< HEAD
-
-            if self.worker["market"] == order.market and self.account.openorders: # if self.config['workers']['worker1']['market'] == order.market and self.account.openorders:
-=======
             if self.worker_market == order.market and self.account.openorders:
->>>>>>> ebc8be740c631e0fe0ab8a56478ed63b88e7bd34
                 orders.append(order)
 
         return orders

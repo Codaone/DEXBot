@@ -1,11 +1,8 @@
 import pytest
 import time
 
-from dexbot.strategies.king_of_the_hill import Strategy
+from dexbot.strategies.relative_orders import Strategy
 from bitshares.market import Market
-import copy
-
-MODES = ['both', 'buy', 'sell']
 
 
 @pytest.fixture(scope='session')
@@ -25,13 +22,13 @@ def account_other(assets, prepare_account):
 
 
 @pytest.fixture(scope='module')
-def base_account(assets, prepare_account, kh_worker_name):
+def base_account(assets, prepare_account, ro_worker_name):
     """ Factory to generate random account with pre-defined balances
     """
 
     def func():
         account = prepare_account({'BASEA': 10000, 'QUOTEA': 100, 'BASEB': 10000, 'QUOTEB': 100, 'TEST': 1000},
-                                  account=kh_worker_name)
+                                  account=ro_worker_name)
         return account
 
     return func
@@ -60,37 +57,65 @@ def other_orders(bitshares, account_other):
     time.sleep(1.1)
 
 
-@pytest.fixture(scope='module')
-def kh_worker_name():
+@pytest.fixture(scope='sess')
+def ro_worker_name():
     """ Fixture to share king_or_the_hill Orders worker name
     """
-    return 'kh-worker'
+    return 'ro-worker'
 
 
 @pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA'), ('QUOTEB', 'BASEB')])
-def config(request, bitshares, account, kh_worker_name):
+def config(request, bitshares, account, ro_worker_name):
     """ Define worker's config with variable assets
 
         This fixture should be function-scoped to use new fresh bitshares account for each test
     """
-    worker_name = kh_worker_name
+    worker_name = ro_worker_name
     config = {
+        # 'node': '{}'.format(bitshares.rpc.url),
+        # 'workers': {
+        #     worker_name: {
+        #         'account': '{}'.format(account),
+        #         'buy_order_amount': 1.0,
+        #         'buy_order_size_threshold': 0.0,
+        #         'fee_asset': 'TEST',
+        #         'lower_bound': 1,
+        #         'market': '{}/{}'.format(request.param[0], request.param[1]),
+        #         'min_order_lifetime': 60,
+        #         'mode': 'both',
+        #         'module': 'dexbot.strategies.king_of_the_hill',
+        #         'relative_order_size': False,
+        #         'sell_order_amount': 2.0,
+        #         'sell_order_size_threshold': 0.0,
+        #         'upper_bound': 0.001
+        #     }
+        # }
         'node': '{}'.format(bitshares.rpc.url),
         'workers': {
             worker_name: {
                 'account': '{}'.format(account),
-                'buy_order_amount': 1.0,
-                'buy_order_size_threshold': 0.0,
+                'amount': 1.0,
+                'center_price': 0.3,
+                'center_price_depth': 0.0,
+                'center_price_dynamic': False,
+                'center_price_offset': False,
+                'custom_expiration': False,
+                'dynamic_spread': False,
+                'dynamic_spread_factor': 1.0,
+                'expiration_time': 157680000.0,
+                'external_feed': False,
+                'external_price_source': 'null',
                 'fee_asset': 'TEST',
-                'lower_bound': 1,
+                'manual_offset': 0.0,
                 'market': '{}/{}'.format(request.param[0], request.param[1]),
-                'min_order_lifetime': 60,
-                'mode': 'both',
-                'module': 'dexbot.strategies.king_of_the_hill',
+                'market_depth_amount': 0.0,
+                'module': 'dexbot.strategies.relative_orders',
+                'partial_fill_threshold': 30.0,
+                'price_change_threshold': 2.0,
                 'relative_order_size': False,
-                'sell_order_amount': 2.0,
-                'sell_order_size_threshold': 0.0,
-                'upper_bound': 0.001
+                'reset_on_partial_fill': True,
+                'reset_on_price_change': False,
+                'spread': 5.0
             }
         }
     }
@@ -98,15 +123,23 @@ def config(request, bitshares, account, kh_worker_name):
 
 
 @pytest.fixture(scope='module')
-def base_worker(bitshares, kh_worker_name):
-    """ Fixture to share king_or_the_hill object
+def ro_base_worker(bitshares, ro_worker_name):
+    """ Fixture to share relative_orders object
     """
-    worker_name = kh_worker_name
+    worker_name = ro_worker_name
     workers = []
 
     def _base_worker(config):
+        print(111111111111111111111111)
+
+        def _make_orders():
+            market = Market('QUOTEA/BASEA', bitshares_instance=bitshares)
+            market.buy(1, 10, returnOrderId=True, account=ro_worker_name)
+            market.buy(2, 20, returnOrderId=True, account=ro_worker_name)
+        _make_orders()
+
         worker = Strategy(
-            name=kh_worker_name,
+            name=worker_name,
             config=config,
             bitshares_instance=bitshares
         )
@@ -121,21 +154,22 @@ def base_worker(bitshares, kh_worker_name):
 
 
 @pytest.fixture
-def worker(base_worker, config):
+def ro_worker(ro_base_worker, config):
     """ Worker to test in single mode (for methods which not required to be tested against all modes)
     """
-    worker = base_worker(config)
+    print(2222222222222222)
+    worker = ro_base_worker(config)
     return worker
 
 
-@pytest.fixture(params=MODES)
-def config_variable_modes(request, config, kh_worker_name):
-    """ Test config which tests all modes
-    """
-    worker_name = kh_worker_name
-    config = copy.deepcopy(config)
-    config['workers'][worker_name]['mode'] = request.param
-    return config
+# @pytest.fixture(params=MODES)
+# def config_variable_modes(request, config, ro_worker_name):
+#     """ Test config which tests all modes
+#     """
+#     worker_name = ro_worker_name
+#     config = copy.deepcopy(config)
+#     config['workers'][worker_name]['mode'] = request.param
+#     return config
 
 
 @pytest.fixture(scope='function')
