@@ -64,7 +64,13 @@ def verbose(f):
         # Set the root logger with basic format
         ch = logging.StreamHandler()
         ch.setFormatter(formatter1)
+        fh = logging.FileHandler('dexbot.log')
+        fh.setFormatter(formatter1)
+
+        # Root logger also logs into stream and file with respect of cli-defined verbosity
         logging.getLogger("dexbot").addHandler(ch)
+        logging.getLogger("dexbot").addHandler(fh)
+        logging.getLogger("dexbot").setLevel(getattr(logging, verbosity.upper()))
         logging.getLogger("").handlers = []
 
         # GrapheneAPI logging

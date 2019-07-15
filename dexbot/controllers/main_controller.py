@@ -22,7 +22,7 @@ class MainController:
         self.config = config
         self.worker_manager = None
 
-        # Configure logging
+        # Configure per_worker logging
         data_dir = user_data_dir(APP_NAME, AUTHOR)
         filename = os.path.join(data_dir, 'dexbot.log')
         formatter = logging.Formatter(
@@ -37,6 +37,14 @@ class MainController:
         logger.addHandler(self.pyqt_handler)
         logger.info("DEXBot {} on python {} {}".format(VERSION, sys.version[:6], sys.platform), extra={
                     'worker_name': 'NONE', 'account': 'NONE', 'market': 'NONE'})
+
+        # Configure root logger
+        logger = logging.getLogger("dexbot")
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh = logging.FileHandler(filename)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.setLevel(logging.INFO)
 
         # Configure orders logging
         initialize_orders_log()

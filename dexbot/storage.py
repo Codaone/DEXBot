@@ -163,37 +163,59 @@ class DatabaseWorker(threading.Thread):
 
         self.lock = threading.Lock()
         self.event = threading.Event()
+        # Daemon thread means it will be abruptly killed on parent thread shutdown
         self.daemon = True
         self.start()
 
     def run(self):
+        # Continuously iterate over task queue and execute tasks
         for func, args, token in iter(self.task_queue.get, None):
             if token is not None:
                 args = args+(token,)
             func(*args)
 
     def _get_result(self, token):
+        """ Get task result from all results by token
+
+            This function is invoked from self.execute() when caller thread executes a method which needs to return some
+            result back to caller. On each loop iteration results are being examined for specified task token. If it is
+            not yet available, the loop execution suspended until DatabaseWorker thread will set self.event flag
+            indicating some task processing is completed. _get_result() is called from another thread while queue
+            processing is performed inside the current thread.
+        """
         while True:
             with self.lock:
                 if token in self.results:
+                    # Find and return task results by token
                     return_value = self.results[token]
                     del self.results[token]
                     return return_value
                 else:
+                    # Suspend loop execution and wait for flag
                     self.event.clear()
+            # Block loop execution waiting Event flag set() from DatabaseWorker thread
             self.event.wait()
 
     def _set_result(self, token, result):
+        """ Associate query results with task token
+        """
         with self.lock:
             self.results[token] = result
             self.event.set()
 
     def execute(self, func, *args):
+        """ Create queue task and return task result
+        """
+        # Token is an unique task identifier
         token = str(uuid.uuid4)
+        # Schedule query execution into DatabaseWorker thread queue
         self.task_queue.put((func, args, token))
+        # Return results when they will be available
         return self._get_result(token)
 
     def execute_noreturn(self, func, *args):
+        """ Create queue task without returning a result
+        """
         self.task_queue.put((func, args, None))
 
     def set_item(self, category, key, value):

@@ -1,0 +1,31 @@
+import asyncio
+import logging
+
+log = logging.getLogger(__name__)
+
+
+class Plugin:
+    """ Example plugin class
+
+        Plugin must have main() method to run. main() is expected to be an asyncio coroutine
+    """
+
+    def __init__(self, config=None, bitshares_instance=None):
+        pass
+
+    async def do_stuff(self):
+        log.info('Doing some stuff')
+        await asyncio.sleep(10)
+        log.info('Stuff done')
+
+    async def boom(self):
+        raise Exception('Boom!')
+
+    async def main(self):
+        try:
+            while True:
+                await self.do_stuff()
+                await asyncio.sleep(5)
+                await self.boom()
+        except asyncio.CancelledError:
+            log.info('Stopping correctly')

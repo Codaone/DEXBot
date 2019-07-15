@@ -3,6 +3,7 @@ import math
 import shutil
 import errno
 import logging
+import pkgutil
 from appdirs import user_data_dir
 
 from dexbot import APP_NAME, AUTHOR
@@ -75,6 +76,15 @@ def initialize_orders_log():
 
     if not file:
         logger.info("worker_name;ID;operation_type;base_asset;base_amount;quote_asset;quote_amount;timestamp")
+
+
+def iter_namespace(ns_pkg):
+    # https://packaging.python.org/guides/creating-and-discovering-plugins/
+    # Specifying the second argument (prefix) to iter_modules makes the
+    # returned name an absolute name instead of a relative one. This allows
+    # import_module to work without having to do additional modification to
+    # the name.
+    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
 
 try:
