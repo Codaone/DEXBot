@@ -39,6 +39,10 @@ class WorkerController:
             'name': 'Staggered Orders',
             'form_module': ''
         }
+        strategies['dexbot.strategies.king_of_the_hill'] = {
+            'name': 'King of the Hill',
+            'form_module': ''
+        }
         for desc, module in find_external_strategies():
             strategies[module] = {'name': desc, 'form_module': module}
             # if there is no UI form in the module then GUI will gracefully revert to auto-ui

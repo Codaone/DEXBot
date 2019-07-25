@@ -36,9 +36,14 @@ STRATEGIES = [
      'name': 'Relative Orders'},
     {'tag': 'stagger',
      'class': 'dexbot.strategies.staggered_orders',
-     'name': 'Staggered Orders'}]
+     'name': 'Staggered Orders'},
+    {'tag': 'koth',
+     'class': 'dexbot.strategies.king_of_the_hill',
+     'name': 'King of the Hill'},
+]
 
-tags_so_far = {'stagger', 'relative'}
+# Todo: tags must be unique. Are they really a tags?
+tags_so_far = [strategy['tag'] for strategy in STRATEGIES]
 for desc, module in dexbot.helper.find_external_strategies():
     tag = desc.split()[0].lower()
     # make sure tag is unique

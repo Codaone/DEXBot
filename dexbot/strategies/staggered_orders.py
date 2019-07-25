@@ -184,6 +184,8 @@ class Strategy(StrategyBase):
             diff = abs(test_order['amount'] - self.real_buy_orders[-1]['quote']['amount'])
             if diff <= self.order_min_quote:
                 self.replace_real_order_with_virtual(self.real_buy_orders[-1])
+                # Orders needs to be refreshed to avoid races
+                self.refresh_orders()
 
         # Replace excessive real orders with virtual ones, sell side
         if self.real_sell_orders and len(self.real_sell_orders) > self.operational_depth + 5:
@@ -191,6 +193,7 @@ class Strategy(StrategyBase):
             diff = abs(test_order['amount'] - self.real_sell_orders[-1]['base']['amount'])
             if diff <= self.order_min_quote:
                 self.replace_real_order_with_virtual(self.real_sell_orders[-1])
+                self.refresh_orders()
 
         # Check for operational depth, buy side
         if (self.virtual_buy_orders and
@@ -234,12 +237,16 @@ class Strategy(StrategyBase):
             trx_executed = True
             try:
                 self.execute()
-            except bitsharesapi.exceptions.RPCError:
+            except bitsharesapi.exceptions.RPCError as exception:
                 """ Handle exception without stopping the worker. The goal is to handle race condition when partially
                     filled order was further filled before we actually replaced them.
                 """
-                self.log.exception('Got exception during broadcasting trx:')
-                return
+                if str(exception).startswith('Assert Exception: maybe_found != nullptr: Unable to find Object'):
+                    self.log.warning(exception)
+                    self.bitshares.txbuffer.clear()
+                    return
+                else:
+                    raise
         self.bitshares.bundle = False
 
         # Maintain the history of free balances after maintenance runs.
@@ -776,9 +783,13 @@ class Strategy(StrategyBase):
                 # Require empty txbuffer to avoid rare condition when order may be already canceled from
                 # replace_partially_filled_order() call
                 self.log.info('Cancelling dust order at opposite side, placing closer {} order'.format(order_type))
+                previous_bundle = self.bitshares.bundle
+                self.bitshares.bundle = False
                 self.cancel_orders_wrapper(closest_opposite_order)
                 self.refresh_balances(use_cached_orders=True)
                 self.place_closer_order(asset, closest_own_order, allow_partial=True)
+                self.refresh_orders()
+                self.bitshares.bundle = previous_bundle
         else:
             # Place first buy order as close to the lower bound as possible
             self.bootstrapping = True
@@ -1505,7 +1516,8 @@ class Strategy(StrategyBase):
                 elif asset == 'quote':
                     quote_amount = balance
             elif place_order:
-                self.log.debug('Not enough balance to place minimal allowed order')
+                self.log.debug('Not enough balance to place minimal allowed order: {:.{prec}f}/{:.{prec}f} {}'
+                               .format(balance, limiter, symbol, prec=precision))
                 place_order = False
 
         if place_order and asset == 'base':
@@ -1618,7 +1630,8 @@ class Strategy(StrategyBase):
                 elif asset == 'quote':
                     quote_amount = balance
             elif place_order:
-                self.log.debug('Not enough balance to place minimal allowed order')
+                self.log.debug('Not enough balance to place minimal allowed order: {:.{prec}f}/{:.{prec}f} {}'
+                               .format(balance, limiter, symbol, prec=precision))
                 place_order = False
 
         if place_order and asset == 'base':
