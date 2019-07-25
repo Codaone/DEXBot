@@ -91,13 +91,12 @@ class Test_StrategyBase:
     #     assert 20 == order['base'], 'calculate_order_data() error!'
     #     assert 2 == order['price'], 'calculate_order_data() error!'
 
-    def test_calculate_worker_value(self):
-        total_account_balance = get_balance('BTS')
-        total_account_calculate = self.strategy_base.calculate_worker_value(
-            'BTS')
-        logging.info(total_account_balance)
-        logging.info(total_account_calculate)
-        assert total_account_balance <= total_account_calculate
+    # def test_calculate_worker_value(self):
+    #     total_account_balance = get_balance('BTS')
+    #     total_account_calculate = self.strategy_base.calculate_worker_value(
+    #         'BTS')
+    #     logging.info(total_account_balance)
+    #     assert total_account_balance <= total_account_calculate
 
     # def test_cancel_all_orders(self):
     #     market = Market(fixture_data()['workers']['worker 1']['market'])

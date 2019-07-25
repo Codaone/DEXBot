@@ -18,7 +18,6 @@ def test_maintain_strategy(worker):
 
 
 
-
 def test_check_orders(worker):
     worker.check_orders()
 

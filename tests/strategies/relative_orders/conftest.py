@@ -1,7 +1,7 @@
 import pytest
 import time
 
-from dexbot.strategies.relative_orders import Strategy
+from  dexbot.strategies.relative_orders import Strategy
 from bitshares.market import Market
 
 
@@ -57,14 +57,14 @@ def other_orders(bitshares, account_other):
     time.sleep(1.1)
 
 
-@pytest.fixture(scope='sess')
+@pytest.fixture(scope='session')
 def ro_worker_name():
     """ Fixture to share king_or_the_hill Orders worker name
     """
     return 'ro-worker'
 
 
-@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA'), ('QUOTEB', 'BASEB')])
+@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA')])  # , ('QUOTEB', 'BASEB')])
 def config(request, bitshares, account, ro_worker_name):
     """ Define worker's config with variable assets
 
@@ -72,24 +72,6 @@ def config(request, bitshares, account, ro_worker_name):
     """
     worker_name = ro_worker_name
     config = {
-        # 'node': '{}'.format(bitshares.rpc.url),
-        # 'workers': {
-        #     worker_name: {
-        #         'account': '{}'.format(account),
-        #         'buy_order_amount': 1.0,
-        #         'buy_order_size_threshold': 0.0,
-        #         'fee_asset': 'TEST',
-        #         'lower_bound': 1,
-        #         'market': '{}/{}'.format(request.param[0], request.param[1]),
-        #         'min_order_lifetime': 60,
-        #         'mode': 'both',
-        #         'module': 'dexbot.strategies.king_of_the_hill',
-        #         'relative_order_size': False,
-        #         'sell_order_amount': 2.0,
-        #         'sell_order_size_threshold': 0.0,
-        #         'upper_bound': 0.001
-        #     }
-        # }
         'node': '{}'.format(bitshares.rpc.url),
         'workers': {
             worker_name: {
@@ -130,14 +112,12 @@ def ro_base_worker(bitshares, ro_worker_name):
     workers = []
 
     def _base_worker(config):
-        print(111111111111111111111111)
-
         def _make_orders():
             market = Market('QUOTEA/BASEA', bitshares_instance=bitshares)
             market.buy(1, 10, returnOrderId=True, account=ro_worker_name)
             market.buy(2, 20, returnOrderId=True, account=ro_worker_name)
-        _make_orders()
 
+        _make_orders()
         worker = Strategy(
             name=worker_name,
             config=config,
@@ -157,7 +137,6 @@ def ro_base_worker(bitshares, ro_worker_name):
 def ro_worker(ro_base_worker, config):
     """ Worker to test in single mode (for methods which not required to be tested against all modes)
     """
-    print(2222222222222222)
     worker = ro_base_worker(config)
     return worker
 
@@ -173,7 +152,8 @@ def ro_worker(ro_base_worker, config):
 
 
 @pytest.fixture(scope='function')
-def orders1(worker):
+def ro_orders1(ro_worker):
+    worker = ro_worker
     worker.place_market_buy_order(1, 100, returnOrderId=True)
     worker.place_market_sell_order(1, 200, returnOrderId=True)
 
@@ -184,22 +164,22 @@ def orders1(worker):
     time.sleep(1.1)
 
 
-@pytest.fixture(scope='function')
-def orders2(worker2):
-    worker2.place_market_buy_order(1, 100, returnOrderId=True)
-    worker2.place_market_sell_order(1, 200, returnOrderId=True)
+# @pytest.fixture(scope='function')
+# def orders2(worker2):
+#     worker2.place_market_buy_order(1, 100, returnOrderId=True)
+#     worker2.place_market_sell_order(1, 200, returnOrderId=True)
+#
+#     # worker.place_market_buy_order(0.5, 200, returnOrderId=True)
+#
+#     yield worker2
+#     worker2.cancel_all_orders()
+#     time.sleep(1.1)
 
-    # worker.place_market_buy_order(0.5, 200, returnOrderId=True)
 
-    yield worker2
-    worker2.cancel_all_orders()
-    time.sleep(1.1)
-
-
-@pytest.fixture
-def worker2(base_worker, config_variable_modes):
-    """ Worker to test all modes
-    """
-    print('进入worker2')
-    worker = base_worker(config_variable_modes)
-    return worker
+# @pytest.fixture
+# def worker2(base_worker, config_variable_modes):
+#     """ Worker to test all modes
+#     """
+#     print('进入worker2')
+#     worker = base_worker(config_variable_modes)
+#     return worker

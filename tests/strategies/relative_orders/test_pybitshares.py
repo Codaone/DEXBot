@@ -24,11 +24,22 @@ def test_asset_quote(bitshares, assets):
     assert a.symbol == 'QUOTEA'
 
 
-def test_correct_asset_names(orders1):
+def test_correct_asset_names(ro_orders1):
     """ Test for https://github.com/bitshares/python-bitshares/issues/239
     """
-    worker = orders1
+    worker = ro_orders1
     worker.account.refresh()
     orders = worker.account.openorders
     symbols = ['BASEA', 'BASEB', 'QUOTEA', 'QUOTEB']
     assert orders[0]['base']['asset']['symbol'] in symbols
+
+def test_correct_asset_names(ro_worker):
+    """ Test for https://github.com/bitshares/python-bitshares/issues/239
+    """
+    worker = ro_worker
+    worker.account.refresh()
+    orders = worker.account.openorders
+    symbols = ['BASEA', 'BASEB', 'QUOTEA', 'QUOTEB']
+    assert orders[0]['base']['asset']['symbol'] in symbols
+    # todo:fixture不能创建worker错误代码：center_price = buy_price * math.sqrt(float(sell_price) / float(buy_price))
+    # todo:ZeroDivisionError: float division by zero

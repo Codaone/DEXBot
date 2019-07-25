@@ -1,8 +1,5 @@
-from dexbot.strategies.king_of_the_hill import Strategy
 import logging
-import pytest
-from bitshares.account import Account
-from bitshares.asset import Asset
+
 
 logging.basicConfig(
     level=logging.INFO,
