@@ -1,9 +1,11 @@
 import logging
+import pytest
 
 log = logging.getLogger("dexbot")
 log.setLevel(logging.DEBUG)
 
 
+@pytest.mark.mandatory
 def test_fetch_orders(storage):
     order = {'id': '111', 'base': '10 CNY', 'quote': '1 BTS'}
     storage.save_order(order)
@@ -12,6 +14,7 @@ def test_fetch_orders(storage):
     assert fetched[order['id']] == order
 
 
+@pytest.mark.mandatory
 def test_fetch_orders_extended(storage):
     order = {'id': '111', 'base': '10 CNY', 'quote': '1 BTS'}
     text = 'foo bar'
@@ -34,6 +37,7 @@ def test_fetch_orders_extended(storage):
     assert result['order'] == order
 
 
+@pytest.mark.mandatory
 def test_clear_orders(storage):
     order = {'id': '111', 'base': '10 CNY', 'quote': '1 BTS'}
     storage.save_order(order)
@@ -42,6 +46,7 @@ def test_clear_orders(storage):
     assert fetched is None
 
 
+@pytest.mark.mandatory
 def test_clear_orders_extended(storage):
     order = {'id': '111', 'base': '10 CNY', 'quote': '1 BTS'}
     storage.save_order_extended(order, virtual=True)
@@ -55,6 +60,7 @@ def test_clear_orders_extended(storage):
     assert fetched == []
 
 
+@pytest.mark.mandatory
 def test_remove_order(storage):
     order = {'id': '111', 'base': '10 CNY', 'quote': '1 BTS'}
     storage.save_order(order)
@@ -62,6 +68,7 @@ def test_remove_order(storage):
     assert storage.fetch_orders() is None
 
 
+@pytest.mark.mandatory
 def test_remove_order_by_id(storage):
     order = {'id': '111', 'base': '10 CNY', 'quote': '1 BTS'}
     storage.save_order(order)

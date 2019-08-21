@@ -22,7 +22,8 @@ before_script:
   # PEP8 linting
   - make pep-test
 script:
-  - echo "@TODO - Running tests..."
+  - echo "Running mandatory tests..."
+  - pytest -m mandatory tests/
   - pyinstaller --distpath dist/$TRAVIS_OS_NAME gui.spec
 before_deploy:
   - git config --local user.name "Travis"

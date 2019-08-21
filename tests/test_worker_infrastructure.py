@@ -25,6 +25,7 @@ def config(bitshares, account):
     return config
 
 
+@pytest.mark.mandatory
 def test_worker_infrastructure(bitshares, config):
     """ Test whether dexbot core is able to work
     """
