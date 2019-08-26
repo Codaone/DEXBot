@@ -15,6 +15,7 @@ class BitsharesPriceFeed:
             - Buy orders reserve BASE
             - Sell orders reserve QUOTE
     """
+
     def __init__(self,
                  market,
                  bitshares_instance=None):
@@ -315,6 +316,11 @@ class BitsharesPriceFeed:
                 return None
             # Calculate and return market center price. make sure buy_price has value
         if buy_price:
+            # add by bitProfessor
+            if isinstance(buy_price, str):
+                buy_price = 1
+            if isinstance(sell_price, str):
+                sell_price = 1
             center_price = buy_price * math.sqrt(sell_price / buy_price)
             self.log.debug('Center price in get_market_center_price: {:.8f} '.format(center_price))
         return center_price
