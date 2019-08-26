@@ -1,147 +1,215 @@
-import math
-from dexbot.helper import truncate
+import logging
 import pytest
-from pytest import approx
+import math
+
+log = logging.getLogger("dexbot")
+log.setLevel(logging.DEBUG)
 
 
-def test_configure(ro_worker, config):
+# def test_place_order_correct_price(ro_worker, other_orders):
+#     """ Test that buy order is placed at correct price.
+#     """
+#     worker=ro_worker
+#     orderbook = worker.market.orderbook(limit=1)
+#     top_price_bid = orderbook['bids'][0]['price']
+#     top_price_ask = orderbook['asks'][0]['price']
+#     a = worker.market.ticker().get('lowestAsk')
+#     assert top_price_ask == a
+#
+#     # from pprint import pprint
+#     # pprint(worker.market.orderbook())
+#
+#     worker.update_orders()
+#     own_buy_orders = worker.get_own_buy_orders()
+#     own_sell_orders = worker.get_own_sell_orders()
+#
+#     # pprint(own_buy_orders)
+#     # pprint(own_sell_orders)
+
+#
+#     own_buy_price = own_buy_orders[0]['price']
+#     own_sell_price = own_sell_orders[0]['price']
+#
+#     # pprint(worker.market.orderbook())
+#
+#     # Our prices are on top
+#     assert own_buy_price < top_price_bid
+#     assert own_sell_price < top_price_ask
+#
+#     # Difference between foreign top price and our price is in range of 10 BASE precision
+#     precision = worker.market['base']['precision']
+#     assert own_buy_price - top_price_bid < top_price_bid + 10 * 10 ** -precision
+#     assert top_price_ask - own_sell_price < top_price_ask - 10 * 10 ** -precision
+#
+#
+# def test_place_order_zero_price(ro_worker):
+#     """ Check that worker goes into error if no prices are calculated
+#     """
+#     worker=ro_worker
+#     worker.sell_price = 0
+#     worker.place_market_sell_order(amount=0,price=0)
+#     assert worker.disabled
+#
+#     worker.disabled = False
+#     worker.buy_price = 0
+#     worker.place_market_buy_order(amount=0,price=0)
+#     assert worker.disabled
+#
+#
+# def test_place_order_zero_amount(ro_worker):
+#     """ Check that worker goes into error if amounts are 0
+#     """
+#     worker = ro_worker
+#
+#     worker.place_market_sell_order(amount=0, price=0)
+#     assert worker.disabled
+#
+#     worker.disabled = False
+#     worker.place_market_buy_order(amount=0, price=0)
+#     assert worker.disabled
+
+def test_check_orders_fully_filled(ro_worker, ro_worker1):
+    """ When our order is fully filled, the strategy should place a new one
+    """
     worker = ro_worker
-    cf = worker.config
+    worker2 = ro_worker1
+    log.debug(worker.account.name)
+    log.debug(worker2.account.name)
 
-    assert config == cf
-
-
-def test_error(ro_worker):
-    '''Event method return None'''
-    worker = ro_worker
-    worker.error()
-    assert worker.disabled == True
-
-
-def test_amount_to_sell(ro_worker):
-    worker = ro_worker
-
-    worker.calculate_order_prices()
-
-    amount_to_sell = worker.amount_to_sell
-
-    amount = worker.config['workers'][worker.account.name]['amount']
-
-    assert amount_to_sell == amount
-
-
-def test_amount_to_buy(ro_worker):
-    worker = ro_worker
-
-    buy_price = worker.center_price / math.sqrt(1 + worker.spread)
-    sell_price = worker.center_price * math.sqrt(1 + worker.spread)
-    assert buy_price == worker.buy_price
-    assert sell_price == worker.sell_price
-    assert worker.center_price == worker.config.get('workers').get(worker.account.name).get('center_price')
-
-    assert worker.amount_to_buy == worker.config.get('workers').get(worker.account.name).get('amount')
-
-
-def test_calculate_order_prices(ro_worker):
-    worker = ro_worker
-    calculate_prices = worker.calculate_order_prices()
-    assert calculate_prices == None
-
-    buy_price = worker.buy_price
-    sell_price = worker.sell_price
-    center_price = worker.center_price
-    spread = worker.spread
-
-    assert worker.center_price == center_price
-
-    buy_price_ca = center_price / math.sqrt(1 + spread)
-
-    sell_price_ca = center_price * math.sqrt(1 + spread)
-
-    assert buy_price == buy_price_ca
-
-    assert sell_price == sell_price_ca
-
-
-@pytest.mark.xfail(reason='decimal digit problem')
-def test_update_orders(ro_worker):
-    worker = ro_worker
     worker.update_orders()
-    orders = worker.own_orders
 
-    for o in orders:
-        if o['base']['symbol'] == worker.market['base']['symbol']:
-            assert o['price'] == round(worker.buy_price, 3)
-            # decimal digit problem
-            assert o['price'] == worker.buy_price
-        else:
-            assert o['price'] == truncate(worker.sell_price, 3)
-            # decimal digit problem
-            assert o['price'] == worker.sell_price
+    # Own order fully filled
+    own_buy_orders = worker.get_own_buy_orders()
+    own_sell_orders = worker.get_own_sell_orders()
+    log.debug('RO orders: {}'.format(worker.own_orders))
+    log.debug('buy orders: {}'.format(own_buy_orders))
+    log.debug('sell orders: {}'.format(own_sell_orders))
+    assert worker.is_buy_order(own_buy_orders)==True
+    # todo:bitshares_engine.get_own_buy_orders
+    assert own_buy_orders != own_sell_orders
+    assert len(worker.own_orders) == 2
+    to_sell = own_buy_orders[0]['quote']['amount']
+    sell_price = own_buy_orders[0]['price'] / 1.01
+    log.debug('Sell {} @ {}'.format(to_sell, sell_price))
+    worker2.place_market_sell_order(to_sell, sell_price)
+    log.debug('RO orders: {}'.format(worker.own_orders))
+    log.debug('worker2 orders: {}'.format(worker2.own_orders))
+    assert len(worker.own_orders) == 1
 
+    to_buy = own_sell_orders[0]['base']['amount']
+    buy_price = own_sell_orders[0]['price'] * 1.01
+    log.debug('{}'.format(own_sell_orders))
+    log.debug('Buy {} @ {}'.format(to_buy, buy_price))
+    worker2.place_market_buy_order(to_buy, buy_price)
+    log.info('Filled RO orders from another account')
+    log.debug('RO orders: {}'.format(worker.own_orders))
+    log.debug('worker2 orders: {}'.format(worker2.own_orders))
 
-def test_calculate_center_price(ro_orders1):
-    worker = ro_orders1
-    highest_bid = worker.market.ticker().get('highestBid')
-    lowest_ask = worker.market.ticker().get('lowestAsk')
-    cp = highest_bid * math.sqrt(lowest_ask / highest_bid)
-    center_price = worker.calculate_center_price()
+    assert len(worker.own_orders) == 0
 
-    assert cp == center_price
-
-
-def test_calculate_asset_offset(ro_orders1):
-    worker = ro_orders1
-    center_price = worker.center_price
-    spread = worker.spread
-
-    total_balance = worker.count_asset()
-    total = (total_balance['quote'] * center_price) + total_balance['base']
-
-    if not total:  # Prevent division by zero
-        base_percent = quote_percent = 0.5
-    else:
-        base_percent = total_balance['base'] / total
-        quote_percent = 1 - base_percent
-
-    highest_bid = float(worker.market.ticker().get('highestBid'))
-    lowest_ask = float(worker.market.ticker().get('lowestAsk'))
-
-    lowest_price = center_price / (1 + spread)
-    highest_price = center_price * (1 + spread)
-
-    lowest_price = max(lowest_price, highest_bid)
-    highest_price = min(highest_price, lowest_ask)
-
-    r = math.pow(highest_price, base_percent) * \
-        math.pow(lowest_price, quote_percent)
-
-    calculate_asset_offset = worker.calculate_asset_offset(
-        center_price=center_price, order_ids=[], spread=spread)
-
-    assert calculate_asset_offset == approx(r)
-    # decimal digit problem
-    # assert calculate_asset_offset == r
-
-
-def test_calculate_manual_offset(ro_orders1):
-    worker = ro_orders1
-    center_price = worker.center_price
-    manual_offset = 0.1
-
-    calculate_offset = worker.calculate_manual_offset(
-        center_price=center_price, manual_offset=manual_offset)
-
-    assert calculate_offset == center_price * (1 + manual_offset)
-
-    manual_offset = -0.1
-
-    calculate_offset = worker.calculate_manual_offset(
-        center_price=center_price, manual_offset=manual_offset)
-
-    assert calculate_offset == center_price / (1 + abs(manual_offset))
-
-
-def test_check_orders(ro_worker):
-    worker = ro_worker
     worker.check_orders()
+
+    # Expect new orders placed
+    assert len(worker.own_orders) == 2
+
+# def test_check_orders_partially_filled(ro_worker, ro_worker1):
+#     """ When our order is partially filled more than threshold, order should be replaced
+#     """
+#     worker2 = ro_worker1
+#     worker = ro_worker
+#     worker.update_orders()
+#
+#     own_buy_orders = worker.get_own_buy_orders()
+#     own_sell_orders = worker.get_own_sell_orders()
+#     log.debug('RO orders: {}'.format(worker.own_orders))
+#
+#     to_sell = own_buy_orders[0]['quote']['amount'] * worker.partial_fill_threshold * 1.02
+#     sell_price = own_buy_orders[0]['price'] / 1.01
+#     log.debug('Sell {} @ {}'.format(to_sell, sell_price))
+#     worker2.place_market_sell_order(to_sell, sell_price)
+#
+#     to_buy = own_sell_orders[0]['base']['amount'] * worker.partial_fill_threshold * 1.02
+#     buy_price = own_sell_orders[0]['price'] * 1.01
+#     log.debug('Buy {} @ {}'.format(to_buy, buy_price))
+#     worker2.place_market_buy_order(to_buy, buy_price)
+#     log.info('Filled RO orders from another account')
+#     log.debug('RO orders: {}'.format(worker.own_orders))
+#
+#     worker.check_orders()
+#
+#     # Expect new orders replaced with full-sized ones
+#     assert len(worker.own_orders) == 2
+#     for order in worker.own_orders:
+#         assert order['base']['amount'] == order['for_sale']['amount']
+#
+#
+# def test_check_orders_beaten_order_cancelled(ro_worker, ro_worker1):
+#     """ Beaten order was cancelled, own order should be moved
+#     """
+#     worker2 = ro_worker1
+#     worker = ro_worker
+#     worker.update_orders()
+#
+#     own_buy_orders = worker.get_own_buy_orders()
+#     own_sell_orders = worker.get_own_sell_orders()
+#     log.debug('RO orders: {}'.format(worker.own_orders))
+#
+#     own_top_bid_price_before = own_buy_orders[0]['price']
+#     own_top_ask_price_before = own_sell_orders[0]['price']
+#
+#     foreign_sell_orders = worker2.get_own_sell_orders()
+#     foreign_buy_orders = worker2.get_own_buy_orders()
+#     worker2.cancel_orders([foreign_sell_orders[0], foreign_buy_orders[0]])
+#
+#     worker.update_orders()
+#     own_buy_orders = worker.get_own_buy_orders()
+#     own_sell_orders = worker.get_own_sell_orders()
+#     own_top_bid_price_after = own_buy_orders[0]['price']
+#     own_top_ask_price_after = own_sell_orders[0]['price']
+#
+#     assert own_top_bid_price_after < own_top_bid_price_before
+#     assert own_top_ask_price_after > own_top_ask_price_before
+#
+# def test_check_orders_new_order_above_our(ro_worker, ro_worker1):
+#     """ Someone put order above ours, own order must be moved
+#     """
+#     worker2 = ro_worker1
+#     worker=ro_worker
+#     worker.update_orders()
+#     own_buy_orders = worker.get_own_buy_orders()
+#     own_sell_orders = worker.get_own_sell_orders()
+#     log.debug('RO orders: {}'.format(worker.own_orders))
+#
+#     own_top_bid_price_before = own_buy_orders[0]['price']
+#     own_top_ask_price_before = own_sell_orders[0]['price']
+#
+#     # Place top orders from another account
+#     buy_price = own_top_bid_price_before * 1.1
+#     sell_price = own_top_ask_price_before / 1.1
+#     order = worker2.place_market_buy_order(10, buy_price)
+#     buy_price_actual = order['price']
+#     order = worker2.place_market_sell_order(10, sell_price)
+#     sell_price_actual = order['price'] ** -1
+#
+#     worker.update_orders()
+#     own_buy_orders = worker.get_own_buy_orders()
+#     own_sell_orders = worker.get_own_sell_orders()
+#     own_top_bid_price_after = own_buy_orders[0]['price']
+#     own_top_ask_price_after = own_sell_orders[0]['price']
+#
+#     assert len(worker.own_orders) == 2
+#     # Our orders are on top
+#     assert own_top_bid_price_after > buy_price_actual
+#     assert own_top_ask_price_after < sell_price_actual
+#
+#
+# def test_check_orders_no_looping(ro_worker, ro_worker1):
+#     """ Make sure order placement is correct so check_orders() doesn't want to continuously move orders
+#     """
+#     worker=ro_worker
+#     worker.update_orders()
+#     ids = [order['id'] for order in worker.own_orders]
+#
+#     worker.update_orders()
+#     ids_new = [order['id'] for order in worker.own_orders]
+#     assert ids == ids_new

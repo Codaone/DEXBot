@@ -192,5 +192,5 @@ def test_a(worker):
 
 # if __name__ == '__main__':
 #     cur_dir = os.path.dirname(__file__)
-#     test_file = os.path.join(cur_dir, 'test_relative_orders1.py')
+#     test_file = os.path.join(cur_dir, 'bak_test_relative_orders1.py')
 #     pytest.main(['--capture=no', test_file])

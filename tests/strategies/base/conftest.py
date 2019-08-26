@@ -62,17 +62,11 @@ def config(bitshares, account_name, symbol):
 
 
 @pytest.fixture
-def base(bitshares, account, account_name, symbol, config):
-    # account = Account(account_name, bitshares_instance=bitshares)
-    # market = Market(symbol, bitshares_instance=bitshares)
+def base(bitshares,account, account_name, config):
     base = StrategyBase(
         name=account_name,
         config=config,
-        # account=account,
-        # market=market,
-        # fee_asset_symbol=symbol.split('/')[0],
         bitshares_instance=bitshares
-        # bitshares_bundle=None,
     )
     yield base
     base.cancel_all_orders()
@@ -89,7 +83,6 @@ def orders1(base):
     yield base
     base.cancel_all_orders()
     time.sleep(1.1)
-
 
 # @pytest.fixture(scope='function')
 # def order_sell(base, account_name):
@@ -109,8 +102,8 @@ def orders1(base):
 #     time.sleep(1.1)
 
 
-@pytest.fixture(scope='function')
-def order_part_filled(base, order_buy, order_sell):
-    yield base
-    base.cancel_all_orders()
-    time.sleep(1.1)
+# @pytest.fixture(scope='function')
+# def order_part_filled(base, order_buy, order_sell):
+#     yield base
+#     base.cancel_all_orders()
+#     time.sleep(1.1)
