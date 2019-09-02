@@ -84,8 +84,8 @@ def test_check_orders_fully_filled(ro_worker, ro_worker1):
     log.debug('RO orders: {}'.format(worker.own_orders))
     log.debug('buy orders: {}'.format(own_buy_orders))
     log.debug('sell orders: {}'.format(own_sell_orders))
-    assert worker.is_buy_order(own_buy_orders)==True
-    # todo:bitshares_engine.get_own_buy_orders
+    assert worker.is_buy_order(own_buy_orders) == True
+    # todo:bitshares_engine.get_own_buy_orders:: filter_buy_orders()
     assert own_buy_orders != own_sell_orders
     assert len(worker.own_orders) == 2
     to_sell = own_buy_orders[0]['quote']['amount']
