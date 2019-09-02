@@ -875,17 +875,19 @@ def test_allocate_asset_increase_orders(worker, do_initial_allocation, maintain_
 
 
 @pytest.mark.xfail(reason='https://github.com/Codaone/DEXBot/issues/588')
-def test_allocate_asset_dust_order(worker, do_initial_allocation, maintain_until_allocated, base_account):
+def test_allocate_asset_dust_order_simple(worker, do_initial_allocation, maintain_until_allocated, base_account):
     """ Make dust order, check if it canceled and closer opposite order placed
     """
     do_initial_allocation(worker, worker.mode)
     num_sell_orders_before = len(worker.sell_orders)
     num_buy_orders_before = len(worker.buy_orders)
     additional_account = base_account()
+
     # Partially fill order from another account
     sell_price = worker.buy_orders[0]['price'] / 1.01
     sell_amount = worker.buy_orders[0]['quote']['amount'] * (1 - worker.partial_fill_threshold) * 1.1
     worker.market.sell(sell_price, sell_amount, account=additional_account)
+
     worker.refresh_balances()
     worker.refresh_orders()
     worker.allocate_asset('quote', worker.quote_balance)
@@ -897,9 +899,10 @@ def test_allocate_asset_dust_order(worker, do_initial_allocation, maintain_until
     assert num_sell_orders_after - num_sell_orders_before == 1
 
 
-@pytest.mark.xfail(reason='https://github.com/Codaone/DEXBot/issues/587')
 def test_allocate_asset_dust_order_increase(worker, do_initial_allocation, base_account, issue_asset):
     """ Test for https://github.com/Codaone/DEXBot/issues/587
+
+        Check if cancelling dust orders on opposite side will not cause a race for allocate_asset() on opposite side
     """
     do_initial_allocation(worker, worker.mode)
     additional_account = base_account()
@@ -910,23 +913,21 @@ def test_allocate_asset_dust_order_increase(worker, do_initial_allocation, base_
     worker.refresh_orders()
     worker.refresh_balances()
     worker.place_closer_order(
-        'quote', worker.sell_orders[0], own_asset_limit=(worker.sell_orders[0]['base']['amount'] / 100)
+        'quote', worker.sell_orders[0], own_asset_limit=(worker.sell_orders[0]['base']['amount'] / 2)
     )
     worker.refresh_orders()
-    # Additional balance to overcome reservation
-    to_issue = worker.sell_orders[1]['base']['amount']
-    issue_asset(worker.market['quote']['symbol'], to_issue, worker.account.name)
+
     # Partially fill order from another account
     buy_price = worker.sell_orders[0]['price'] ** -1 * 1.01
     buy_amount = worker.sell_orders[0]['base']['amount'] * (1 - worker.partial_fill_threshold) * 1.1
     log.debug('{}, {}'.format(buy_price, buy_amount))
     worker.market.buy(buy_price, buy_amount, account=additional_account)
 
-    # PF fill sell order should be replaced without errors
+    # PF fill sell order should be cancelled and closer buy placed
     worker.maintain_strategy()
     worker.refresh_orders()
     num_buy_orders_after = len(worker.buy_orders)
-    assert num_buy_orders_before - num_buy_orders_after == 1
+    assert num_buy_orders_after - num_buy_orders_before == 1
 
 
 @pytest.mark.xfail(reason='https://github.com/Codaone/DEXBot/issues/588')

@@ -813,36 +813,26 @@ class BitsharesOrderEngine(Storage, Events):
             return None
         return order
 
+    def is_partially_filled(self, order, threshold=0.3):
+        """ Checks whether order was partially filled
 
-if __name__ == '__main__':
-    from tests.fixtures import fixture_data
-    from bitshares import BitShares
-    from bitshares.account import Account
+            :param dict order: Order instance
+            :param float fill_threshold: Order fill threshold, relative
+            :return: bool True = Order is filled more than threshold
+                          False = Order is not partially filled
+        """
+        if self.is_buy_order(order):
+            order_type = 'buy'
+            price = order['price']
+        else:
+            order_type = 'sell'
+            price = order['price'] ** -1
 
-    TEST_CONFIG = fixture_data('OE')
-    bts = BitShares(TEST_CONFIG['node'])
-    account = Account(
-        TEST_CONFIG['workers']['worker 1']['account']
-    )
-    assert account['name'] == 'dexbot-test4'
-    market_symbol = TEST_CONFIG['workers']['worker 1']['market']
-    assert market_symbol == 'TEST/DEXBOT'
-    base_symbol = market_symbol.split('/')[1]
-    assert base_symbol == 'DEXBOT'
-    quote_symbol = market_symbol.split('/')[0]
-    assert quote_symbol == 'TEST'
-    market = Market(market_symbol)
-    fee_asset = TEST_CONFIG['workers']['worker 1']['fee_asset']
-    fee_asset == 'TEST'
-    oe = BitsharesOrderEngine(
-        name='worker 1',
-        config=TEST_CONFIG,
-        account=account,
-        market=market,
-        fee_asset_symbol=fee_asset,
-        bitshares_instance=None,
-        bitshares_bundle=None,
-    )
-
-    r = oe.get_own_spread()
-    print(r)
+        if order['for_sale']['amount'] != order['base']['amount']:
+            diff_abs = order['base']['amount'] - order['for_sale']['amount']
+            diff_rel = diff_abs / order['base']['amount']
+            if diff_rel > threshold:
+                self.log.debug('Partially filled {} order: {} {} @ {:.8f}, filled: {:.2%}'.format(
+                               order_type, order['base']['amount'], order['base']['symbol'], price, diff_rel))
+                return True
+        return False

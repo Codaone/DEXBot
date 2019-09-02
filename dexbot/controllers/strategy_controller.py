@@ -295,3 +295,69 @@ class StaggeredOrdersController(StrategyController):
         if not self.view.strategy_widget.lower_bound_input.value():
             error_texts.append("Lower bound can't be 0")
         return error_texts
+
+
+class KingOfTheHillController(StrategyController):
+
+    def __init__(self, view, configure, worker_controller, worker_data):
+        self.view = view
+        self.configure = configure
+        self.worker_controller = worker_controller
+
+        # Check if there is worker data. This prevents error when multiplying None type when creating worker.
+        super().__init__(view, configure, worker_controller, worker_data)
+
+        widget = self.view.strategy_widget
+
+        # Event connecting
+        widget.relative_order_size_input.clicked.connect(self.onchange_relative_order_size_input)
+        widget.mode_input.currentIndexChanged.connect(self.onchange_mode_input)
+
+        # Trigger the onchange events once
+        self.onchange_relative_order_size_input(widget.relative_order_size_input.isChecked())
+        self.onchange_mode_input(widget.mode_input.currentIndex())
+
+    def onchange_relative_order_size_input(self, checked):
+        if checked:
+            self.order_size_input_to_relative()
+        else:
+            self.order_size_input_to_static()
+
+    def order_size_input_to_relative(self):
+        self.view.strategy_widget.buy_order_amount_input.setSuffix('%')
+        self.view.strategy_widget.buy_order_amount_input.setDecimals(2)
+        self.view.strategy_widget.buy_order_amount_input.setMaximum(100.00)
+        self.view.strategy_widget.buy_order_amount_input.setMinimumWidth(170)
+
+        self.view.strategy_widget.sell_order_amount_input.setSuffix('%')
+        self.view.strategy_widget.sell_order_amount_input.setDecimals(2)
+        self.view.strategy_widget.sell_order_amount_input.setMaximum(100.00)
+        self.view.strategy_widget.sell_order_amount_input.setMinimumWidth(170)
+
+    def order_size_input_to_static(self):
+        self.view.strategy_widget.buy_order_amount_input.setSuffix('')
+        self.view.strategy_widget.buy_order_amount_input.setDecimals(8)
+        self.view.strategy_widget.buy_order_amount_input.setMaximum(1000000000.000000)
+
+        self.view.strategy_widget.sell_order_amount_input.setSuffix('')
+        self.view.strategy_widget.sell_order_amount_input.setDecimals(8)
+        self.view.strategy_widget.sell_order_amount_input.setMaximum(1000000000.000000)
+
+    def onchange_mode_input(self, index):
+        assert index < 3, 'Impossible mode'
+
+        if index == 0:
+            self.view.strategy_widget.buy_order_amount_input.setDisabled(False)
+            self.view.strategy_widget.sell_order_amount_input.setDisabled(False)
+            self.view.strategy_widget.buy_order_size_threshold_input.setDisabled(False)
+            self.view.strategy_widget.sell_order_size_threshold_input.setDisabled(False)
+        elif index == 1:
+            self.view.strategy_widget.buy_order_amount_input.setDisabled(False)
+            self.view.strategy_widget.sell_order_amount_input.setDisabled(True)
+            self.view.strategy_widget.buy_order_size_threshold_input.setDisabled(False)
+            self.view.strategy_widget.sell_order_size_threshold_input.setDisabled(True)
+        elif index == 2:
+            self.view.strategy_widget.buy_order_amount_input.setDisabled(True)
+            self.view.strategy_widget.sell_order_amount_input.setDisabled(False)
+            self.view.strategy_widget.buy_order_size_threshold_input.setDisabled(True)
+            self.view.strategy_widget.sell_order_size_threshold_input.setDisabled(False)
