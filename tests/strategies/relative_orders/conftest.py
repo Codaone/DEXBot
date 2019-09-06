@@ -52,8 +52,6 @@ def other_orders(bitshares, account_other):
     o = market.buy(1.5, 20, returnOrderId=True, account='other')
     ors_ids.append(o.get('orderid'))
     yield
-    # if order filled then market.cancel() error
-    # market.cancel(ors_ids, account='other')
     time.sleep(1.1)
 
 
@@ -64,7 +62,7 @@ def ro_worker_name():
     return 'ro-worker'
 
 
-@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA')])  # , ('QUOTEB', 'BASEB')])
+@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA')])
 def config(request, bitshares, account, ro_worker_name):
     """ Define worker's config with variable assets
 
@@ -147,16 +145,11 @@ def ro_orders1(ro_worker):
     worker.place_market_buy_order(1, 100, returnOrderId=True)
     worker.place_market_sell_order(1, 200, returnOrderId=True)
 
-    # worker.place_market_buy_order(0.5, 200, returnOrderId=True)
-
     yield worker
     worker.cancel_all_orders()
     time.sleep(1.1)
 
 
-#######################################
-# test single account multiple workers#
-#######################################
 @pytest.fixture(scope='session')
 def ro_worker_name1():
     """ Fixture to share ro Orders worker name
@@ -172,7 +165,6 @@ def ro_base_worker1(bitshares, config1, ro_worker_name1):
     workers = []
 
     def _base_worker(config1):
-
         worker = Strategy(
             name=worker_name,
             config=config1,
@@ -196,8 +188,8 @@ def ro_worker1(ro_base_worker1, config1):
     return worker
 
 
-@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA')])  # , ('QUOTEB', 'BASEB')])
-def config1(request, bitshares, config, account_other, ro_worker_name1, ro_worker_name):
+@pytest.fixture(scope='module', params=[('QUOTEA', 'BASEA')])
+def config1(bitshares, config, account_other, ro_worker_name1, ro_worker_name):
     """ Define multiple worker's config with variable assets
 
     """
@@ -205,6 +197,62 @@ def config1(request, bitshares, config, account_other, ro_worker_name1, ro_worke
     config = copy.deepcopy(config)
     a = config['workers'][ro_worker_name]
     a['account'] = 'other'
+    b = {worker_name: a}
+    config['workers'] = b
+    return config
+
+
+#######################################
+# test single account multiple workers#
+#######################################
+
+
+@pytest.fixture(scope='session')
+def multiple_worker_name():
+    """ Fixture to share ro Orders worker name
+    """
+    return 'ro-worker-multiple'
+
+
+@pytest.fixture(scope='module')
+def multiple_base_worker(bitshares, single_account_config, multiple_worker_name):
+    """ Fixture to share relative_orders object
+    """
+    worker_name = multiple_worker_name
+    workers = []
+
+    def _base_worker(single_account_config):
+        worker = Strategy(
+            name=worker_name,
+            config=single_account_config,
+            bitshares_instance=bitshares
+        )
+        workers.append(worker)
+        return worker
+
+    yield _base_worker
+    for worker in workers:
+        worker.cancel_all_orders()
+        worker.bitshares.txbuffer.clear()
+        worker.bitshares.bundle = False
+
+
+@pytest.fixture
+def multiple_worker(multiple_base_worker, single_account_config):
+    """ Worker to test in single mode (for methods which not required to be tested against all modes)
+    """
+    worker = multiple_base_worker(single_account_config)
+    return worker
+
+
+@pytest.fixture(scope='module')
+def single_account_config(bitshares, config, multiple_worker_name, ro_worker_name):
+    """ Define multiple worker's config with single account
+
+    """
+    worker_name = multiple_worker_name
+    config = copy.deepcopy(config)
+    a = config['workers'][ro_worker_name]
     b = {worker_name: a}
     config['workers'] = b
     return config

@@ -32,7 +32,6 @@ def test_amount_to_sell(ro_worker):
     assert amount_to_sell == amount
 
 
-
 def test_amount_to_buy(ro_worker):
     worker = ro_worker
 
@@ -46,9 +45,10 @@ def test_amount_to_buy(ro_worker):
 
     worker.is_relative_order_size = True
     base_balance = float(worker.balance(worker.market['base']))
-    amount = base_balance * (amount / 100)/ worker.buy_price
+    amount = base_balance * (amount / 100) / worker.buy_price
 
     assert worker.amount_to_buy == amount
+
 
 def test_calculate_order_prices(ro_worker):
     worker = ro_worker
