@@ -127,7 +127,8 @@ class BitsharesOrderEngine(Storage, Events):
         try:
             self.retry_action(self.bitshares.cancel, orders, account=self._account, fee_asset=self.fee_asset['id'])
         except bitsharesapi.exceptions.UnhandledRPCError as exception:
-            if str(exception).startswith('Assert Exception: maybe_found != nullptr: Unable to find Object'):
+            str_exception = str(exception)
+            if ('Order does not exist' in str_exception) or ('Unable to find Object' in str_exception):
                 # The order(s) we tried to cancel doesn't exist
                 self.bitshares.txbuffer.clear()
                 return False
