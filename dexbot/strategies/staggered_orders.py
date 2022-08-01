@@ -858,15 +858,19 @@ class Strategy(StrategyBase):
                         opposite_orders = self.filter_buy_orders(stored_orders, sort='DESC')
 
                     try:
-                        # Note: The 1st opposite order may have been partially filled, limiting by it may lead to a lot of small
-                        #       orders being placed (especially when a significant price drop or spike occurred on the market),
-                        #       although their sizes will be increased later, but if some of them got filled before updated,
-                        #       it may lead to
+                        # Note: The 1st opposite order may be a partial order due to
+                        #       a) the dust order handling logic (#486), or
+                        #       b) on the sell side where partial orders are allowed due to the fall back logic (#485), or
+                        #       c) placing max-sized closer order if only one order needed to reach target spread.
+                        #       Limiting by it may lead to a lot of small orders being placed, especially when a significant
+                        #       price drop or spike occurred on the market. Although they may be upsized later, but if some of
+                        #       them got filled before upsizing, it may lead to
                         #       a) small orders being placed on the opposite side which can not be updated to the normal size
                         #          in a relatively long period, and
-                        #       b) a lot of funds will be used to increase sizes of orders deep down in the order book which makes
-                        #          it harder to recover.
-                        #       Using the 2nd closest opposite order gets around the problem.
+                        #       b) a lot of "exceeded" funds on the current side which will be used to upsize orders deep down
+                        #          in the order book later, which makes the situation worse and harder to recover.
+                        #       Using the 2nd closest opposite order mitigates the problem.
+                        #       Ideally still need logic to check whether the closest own order is partial and upsize it if so.
                         opposite_order = opposite_orders[1]
                         self.log.debug('Using stored opposite order')
                     except IndexError:
