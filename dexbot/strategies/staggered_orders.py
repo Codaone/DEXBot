@@ -508,6 +508,7 @@ class Strategy(StrategyBase):
             success = self.cancel_orders_wrapper(orders_to_cancel, batch_only=True)
             # Refresh orders to prevent orders outside boundaries being in the future comparisons
             self.refresh_orders()
+            self.refresh_balances(use_cached_orders=True)
             # Batch cancel failed, repeat cancelling only one order
             if success:
                 return True
@@ -741,6 +742,7 @@ class Strategy(StrategyBase):
         self.log.debug('Need to allocate {}: {}'.format(asset, asset_balance))
         closest_opposite_order = None
         closest_opposite_price = 0
+        closest_opposite_order2 = None # The 2nd closest opposite order
         opposite_asset_limit = None
         opposite_orders = []
         order_type = ''
@@ -784,6 +786,10 @@ class Strategy(StrategyBase):
             if opposite_orders:
                 closest_opposite_order = opposite_orders[0]
                 closest_opposite_price = closest_opposite_order['price'] ** -1
+                try:
+                    closest_opposite_order2 = opposite_orders[1] # Get the 2nd order
+                except IndexError:
+                    closest_opposite_order2 = opposite_orders[0] # Fall back: get the 1st order
             elif asset == 'base':
                 # For one-sided start, calculate closest_opposite_price empirically
                 closest_opposite_price = self.market_center_price * (1 + self.target_spread / 2)
@@ -852,11 +858,24 @@ class Strategy(StrategyBase):
                         opposite_orders = self.filter_buy_orders(stored_orders, sort='DESC')
 
                     try:
-                        opposite_order = opposite_orders[0]
+                        # Note: The 1st opposite order may be a partial order due to
+                        #       a) the dust order handling logic (#486), or
+                        #       b) on the sell side where partial orders are allowed due to the fall back logic (#485), or
+                        #       c) placing max-sized closer order if only one order needed to reach target spread.
+                        #       Limiting by it may lead to a lot of small orders being placed, especially when a significant
+                        #       price drop or spike occurred on the market. Although they may be upsized later, but if some of
+                        #       them got filled before upsizing, it may lead to
+                        #       a) small orders being placed on the opposite side which can not be updated to the normal size
+                        #          in a relatively long period, and
+                        #       b) a lot of "exceeded" funds on the current side which will be used to upsize orders deep down
+                        #          in the order book later, which makes the situation worse and harder to recover.
+                        #       Using the 2nd closest opposite order mitigates the problem.
+                        #       Ideally still need logic to check whether the closest own order is partial and upsize it if so.
+                        opposite_order = opposite_orders[1]
                         self.log.debug('Using stored opposite order')
                     except IndexError:
                         self.log.debug('Using real opposite order')
-                        opposite_order = closest_opposite_order
+                        opposite_order = closest_opposite_order2
 
                     if (
                         self.mode == 'mountain'
@@ -864,6 +883,7 @@ class Strategy(StrategyBase):
                         or (self.mode == 'sell_slope' and asset == 'quote')
                     ):
                         opposite_asset_limit = None
+                        # TODO The amount may need to be calculated due to the 2nd opposite order used
                         own_asset_limit = opposite_order['quote']['amount']
                         self.log.debug(
                             'Limiting {} order by opposite order: {:.{prec}f} {}'.format(
@@ -876,7 +896,10 @@ class Strategy(StrategyBase):
                         or (self.mode == 'buy_slope' and asset == 'quote')
                         or (self.mode == 'sell_slope' and asset == 'base')
                     ):
+                        # TODO The amount may need to be calculated due to the 2nd opposite order used
                         opposite_asset_limit = opposite_order['base']['amount']
+                        if self.mode == 'neutral':
+                            opposite_asset_limit = opposite_asset_limit * math.sqrt(1 + self.increment)
                         own_asset_limit = None
                         self.log.debug(
                             'Limiting {} order by opposite order: {:.{prec}f} {}'.format(
@@ -1560,6 +1583,10 @@ class Strategy(StrategyBase):
                     order_type, asset_balance['amount'], needed, order['base']['symbol'], prec=precision
                 )
             )
+            if order_type == 'sell':
+                self.quote_asset_threshold = needed
+            else: # order_type == 'buy'
+                self.base_asset_threshold = needed
 
     def place_closer_order(
         self, asset, order, place_order=True, allow_partial=False, own_asset_limit=None, opposite_asset_limit=None
