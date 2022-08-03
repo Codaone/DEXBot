@@ -769,7 +769,7 @@ class BitsharesOrderEngine(Storage, Events):
         worker_market = self._market.get_string('/')
 
         for order in self._account.openorders:
-            if worker_market == order.market and self._account.openorders:
+            if worker_market == order.market:
                 orders.append(order)
 
         return orders
