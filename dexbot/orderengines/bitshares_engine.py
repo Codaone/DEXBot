@@ -700,6 +700,9 @@ class BitsharesOrderEngine(Storage, Events):
                         self.log.warning("Ignoring: '{}'".format(str(exception)))
                         self.bitshares.txbuffer.clear()
                         self._account.refresh()
+                        if action == self.execute :  
+                            self.log.warning("Cleared txbuffer so unable to retry self.execute")
+                            return None
                         time.sleep(2)
                 elif "now <= trx.expiration" in str(exception):  # Usually loss of sync to blockchain
                     if tries > MAX_TRIES:
@@ -708,6 +711,9 @@ class BitsharesOrderEngine(Storage, Events):
                         tries += 1
                         self.log.warning("retrying on '{}'".format(str(exception)))
                         self.bitshares.txbuffer.clear()
+                        if action == self.execute :  
+                            self.log.warning("Cleared txbuffer so unable to retry self.execute")
+                            return None
                         time.sleep(6)  # Wait at least a BitShares block
                 elif "trx.expiration <= now + chain_parameters.maximum_time_until_expiration" in str(exception):
                     if tries > MAX_TRIES:
@@ -725,6 +731,9 @@ class BitsharesOrderEngine(Storage, Events):
                         )
                         self.bitshares.txbuffer.clear()
                         self.bitshares.rpc.next()
+                        if action == self.execute :  
+                            self.log.warning("Cleared txbuffer so unable to retry self.execute")
+                            return None
                 elif "Assert Exception: delta.amount > 0: Insufficient Balance" in str(exception):
                     self.log.critical('Insufficient balance of fee asset')
                     raise
@@ -741,6 +750,9 @@ class BitsharesOrderEngine(Storage, Events):
                         new = self.bitshares.rpc.url
                         self.log.info('Old: {}, new: {}'.format(old, new))
                         tries += 1
+                        if action == self.execute :  
+                            self.log.warning("Cleared txbuffer so unable to retry self.execute")
+                            return None
                 else:
                     raise
 
