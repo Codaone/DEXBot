@@ -1,5 +1,7 @@
 # DEXBot
 
+**Note: this repository is not maintained, please check <https://github.com/froooze/DEXBot2> instead.**
+
 [![Build Status (master)](https://travis-ci.org/Codaone/DEXBot.svg?branch=master)](https://travis-ci.org/Codaone/DEXBot)
 [![Documentation
 Status](https://readthedocs.org/projects/dexbot/badge/?version=latest)](https://dexbot.readthedocs.io/en/latest/?badge=latest)
